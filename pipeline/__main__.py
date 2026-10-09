@@ -184,8 +184,10 @@ def integrate_cmd(course: str = typer.Option(...), class_id: str | None = typer.
             state.mark(d["state"], "integrate", "blocked", error="sin temas-candidatos.json")
             continue
         counts = {"created": 0, "updated": 0, "unchanged": 0}
-        for cand in ch.load_json(cands_path):
-            counts[integrate.upsert_tema(vc, course, cand, cid)] += 1
+        cands = ch.load_json(cands_path)
+        index = integrate.title_index(vc, cands)
+        for cand in cands:
+            counts[integrate.upsert_tema(vc, course, cand, cid, index)] += 1
         state.mark(d["state"], "integrate", "ok", **counts)
         con.print(f"{cid}: {counts}")
     integrate.regen_moc(vc, course, c.full_name)

@@ -17,8 +17,22 @@ def slugify(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
 
 
-def upsert_tema(vault_course: Path, course: str, cand: dict, class_id: str) -> str:
-    """cand: {slug?, titulo, resumen, timestamps:[hh:mm:ss], relacionados:[titulo]} -> created|updated|unchanged."""
+def title_index(vault_course: Path, cands: list[dict] | None = None) -> dict[str, str]:
+    """slugify(title) -> real slug, from existing temas (frontmatter `tema:`) and this batch of candidates."""
+    idx: dict[str, str] = {}
+    for p in (vault_course / "temas").glob("*.md"):
+        m = re.search(r"^tema: (.+)$", p.read_text(encoding="utf-8"), re.MULTILINE)
+        idx[slugify(m.group(1) if m else p.stem)] = p.stem
+    for c in cands or []:
+        idx[slugify(c["titulo"])] = c.get("slug") or slugify(c["titulo"])
+    return idx
+
+
+def upsert_tema(vault_course: Path, course: str, cand: dict, class_id: str, index: dict[str, str] | None = None) -> str:
+    """cand: {slug?, titulo, resumen, timestamps:[hh:mm:ss], relacionados:[titulo]} -> created|updated|unchanged.
+
+    `index` (from title_index) maps related titles to real slugs; unknown titles fall back to slugify.
+    """
     slug = cand.get("slug") or slugify(cand["titulo"])
     path = vault_course / "temas" / f"{slug}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -29,7 +43,7 @@ def upsert_tema(vault_course: Path, course: str, cand: dict, class_id: str) -> s
         body = tpl.replace("{{tema}}", cand["titulo"]).replace("curso: \n", f"curso: {course}\n", 1)
         body = body.replace("tema: \n", f"tema: {cand['titulo']}\n", 1)
         body = body.replace("## Ideas clave\n", "## Ideas clave\n" + cand["resumen"].strip() + "\n")
-        rel = "".join(f"- [[{slugify(r)}]]\n" for r in cand.get("relacionados") or [])
+        rel = "".join(f"- [[{(index or {}).get(slugify(r), slugify(r))}]]\n" for r in cand.get("relacionados") or [])
         body = body.replace("## Relacionado\n", "## Relacionado\n" + rel).replace("## Visto en\n", "## Visto en\n" + seen + "\n")
         path.write_text(body, encoding="utf-8")
         return "created"

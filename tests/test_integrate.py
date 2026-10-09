@@ -44,3 +44,15 @@ def test_avisos_and_calendario(tmp_path):
     assert "## [[2026-10-07-clase-15]]" in p.read_text() and "Traer laptop" in p.read_text()
     cal = it.regen_calendario(vault, ["arqui"]).read_text(encoding="utf-8")
     assert "| arqui | [[2026-10-07-clase-15]] | - Parcial el 15/10 [00:00:30] |" in cal and "laptop" not in cal
+
+
+def test_related_titles_resolve_to_real_slugs(tmp_path):
+    vc = tmp_path / "arqui"
+    other = {"slug": "catalogo-de-atributos-sap", "titulo": "Catálogo de atributos del SAP", "resumen": "x", "timestamps": []}
+    cand = {**CAND, "relacionados": ["Catálogo de atributos del SAP", "Algo nuevo"]}
+    idx = it.title_index(vc, [other, cand])
+    it.upsert_tema(vc, "arqui", cand, "c1", idx)
+    t = (vc / "temas" / "arquitectura-en-capas.md").read_text(encoding="utf-8")
+    assert "- [[catalogo-de-atributos-sap]]" in t and "- [[algo-nuevo]]" in t
+    it.upsert_tema(vc, "arqui", other, "c1", idx)
+    assert it.title_index(vc)["catalogo-de-atributos-del-sap"] == "catalogo-de-atributos-sap"
