@@ -26,16 +26,17 @@ Pipeline para 4 cursos (arqui, negsoft, dbpt, isa2). Por clase: baja video + VTT
 ## Comandos
 ```bash
 uv sync && uv run pytest -q && uv run ruff check pipeline tests      # salud del repo
+uv run python -m pipeline init-vault                                   # crea la estructura base del vault
 uv run python -m pipeline list-showcase --course arqui                 # qué hay y qué class_id tendría
-uv run python -m pipeline fetch --course arqui [--subs-only] [--class ID]
-uv run python -m pipeline transcript --course arqui
-uv run python -m pipeline frames --course arqui
+uv run python -m pipeline fetch --course arqui [--class ID] [--subs-only] [--force]
+uv run python -m pipeline transcript --course arqui [--class ID]
+uv run python -m pipeline frames --course arqui [--class ID]
 uv run python -m pipeline prompt --course arqui --class ID             # arma analysis-prompt.md + avisos-excerpts.md
 uv run python -m pipeline analyze --course arqui --class ID --runner agent|claude-p --budget 3
-uv run python -m pipeline validate --course arqui
+uv run python -m pipeline validate --course arqui [--class ID]
 uv run python -m pipeline integrate --course arqui && uv run python -m pipeline canvas --course arqui
-uv run python -m pipeline sync --course arqui
-uv run python -m pipeline status
+uv run python -m pipeline sync --course arqui [--class ID]
+uv run python -m pipeline status [--course arqui]
 ```
 Cada etapa deja `ok|blocked` en `state/<curso>/<class_id>.json`; una etapa `ok` no se repite sin `--force`.
 
