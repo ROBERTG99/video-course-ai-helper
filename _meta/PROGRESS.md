@@ -2,15 +2,14 @@
 Última actualización: 2026-10-09
 
 ## Estado por fase
-- F0 Bootstrap: 🟡 en curso — esqueleto creado (CLAUDE.md, config, spec, plan, agentes, comandos). `.env` cargado, Obsidian instalado, Whisper eliminado del diseño. Falta: ffmpeg, uv init, repo GitHub + commit inicial, abrir vault en Obsidian.
-- F1 Retrieval: ⬜
-- F2 Pilot: ⬜
-- F3 Tandas: ⬜
-- F4 Vault: ⬜
-- F5 Sync/rutina: ⬜
+- F0 Bootstrap: ✅ 2026-10-09 — repo GitHub privado, `.env`, ffmpeg 9 + tesseract spa, `uv sync`, Task 1 (config/state + tests) verde, plan de implementación escrito, skill `vch-pipeline`, agentes, comandos. Retrieval verificado en arqui (`es-x-autogen` vía `player_embed_url` firmada). Inventario: arqui 15 · negsoft 7 · dbpt 8 · isa2 15 = 45 clases.
+- Olas 1–2 del plan (T2–T9): ⬜ (próximo)
+- Ola 3 (T10–T11) + Task 12 pilot: ⬜
+- Task 13 tandas: ⬜
+- Task 14 rutina `/nueva-clase`: ⬜
 
 ## Bloqueos
 - Ninguno.
 
 ## Próximo paso
-F0: crear repo GitHub, instalar ffmpeg, `uv init`, probar `--list-subs` en una clase por curso.
+Nueva sesión en `~/dev/video-course-ai-helper` → `/retomar` → ejecutar Ola 1 del plan (T2, T3, T4, T5 en paralelo, 4 agentes sonnet) con `superpowers:subagent-driven-development`. Pendiente de Robert: abrir `vault/` en Obsidian cuando exista (`init-vault` llega en T10).

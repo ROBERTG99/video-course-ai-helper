@@ -1,4 +1,7 @@
-# slug: internal id used everywhere (folders, state, vault). drive_folder: existing folder under $DRIVE_ROOT.
+# slug: internal id used everywhere (folders, state, vault). drive_folder: existing folder under $DRIVE_ROOT
+# ($DRIVE_ROOT lives in .env; on Robert's Mac it is
+#  "/Users/robert/Library/CloudStorage/GoogleDrive-robertino.gattas@gmail.com/My Drive/2026").
+# Final mirror of vault/<slug>/ goes to $DRIVE_ROOT/<drive_folder>/notas/; raw backup to $DRIVE_ROOT/_clases-dump/<slug>/.
 # full_name is used in note titles.
 courses:
   arqui:

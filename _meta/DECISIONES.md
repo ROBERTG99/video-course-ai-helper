@@ -8,4 +8,8 @@
 - **Opus solo en `verificador-avisos` e integración de temas.** Por qué: playbook §3; el único lugar donde el recall vale el costo es en lo que el profesor dijo sobre exámenes/entregas.
 - **Imágenes con link markdown relativo, notas con wikilink.** Por qué: las imágenes deben verse también en Drive/otros viewers; los wikilinks son lo que arma el grafo.
 - **Plantilla de nota fija antes de cualquier fan-out** (§4.6 playbook). Cambios de plantilla = nueva decisión + re-corrida explícita.
+- **Retrieval = `player_embed_url` firmada de la API del showcase + yt-dlp con Referer vimeo.com** (2026-10-09). Por qué: la URL del showcase falla con yt-dlp 2026.08 (API client `web` exige login); la ruta del player no. La firma expira ~24 h: listar y bajar en la misma corrida.
+- **Resultados fuera de GitHub**: `vault/`, `raw/`, `work/`, `state/` gitignored; plantillas en `templates/`; Drive es el backup. Por qué: pedido de Robert; el repo es código + plan + prompts.
+- **Espejo en Drive en `<Curso>/notas/`** (no `clases/`): incluye temas y MOC, no solo clases.
+- **Commits por tarea del plan autorizados** (2026-10-09); fuera del plan sigue el "ok" previo.
 - **Videos solo en `_clases-dump`** (no duplicados en la carpeta del curso); la nota lleva `video_path`. Por qué: ~40 GB, duplicarlos no aporta.

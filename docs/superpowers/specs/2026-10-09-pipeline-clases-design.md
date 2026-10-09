@@ -15,10 +15,8 @@ Criterio de éxito: Robert puede preguntarle a Claude Code "¿qué dijo el profe
 ## 2. Dónde está el VTT de Vimeo (verificado contra el extractor de yt-dlp)
 - El player de Vimeo expone `https://player.vimeo.com/video/<id>/config` (JSON). En `request.text_tracks[]` vienen `{lang, url, kind, label}`; los subtítulos automáticos aparecen con `lang` tipo `es-x-autogen` (provenance `ai_generated`). La `url` es relativa a `player.vimeo.com` o firmada en `captions.vimeo.com` y **expira**: hay que bajar el `.vtt` y guardarlo, no el link.
 - Segunda vía (si el video expone `metadata.connections.texttracks`): `api.vimeo.com/videos/<id>/texttracks?include_transcript=true` → campo `link` por track. Requiere token del dueño; **no aplica** (los videos son del profesor).
-- yt-dlp lee `text_tracks` del config y los expone como subtítulos comunes (NO como "auto subs"). Comando mínimo:
-  `yt-dlp --video-password "$PASS" --list-subs "<url>"` → luego `--write-subs --sub-langs all --sub-format vtt`.
-- Showcase con password: el extractor `VimeoAlbumIE` lee `--video-password`, hace POST a `vimeo.com/showcase/<id>/auth` y lista los videos con `_hashed_pass`. Un solo comando sobre la URL del showcase baja todo el curso (`--download-archive` lo hace incremental).
-- Fallback si yt-dlp fallara por anti-bot: `--cookies-from-browser chrome` tras abrir el showcase logueado; último recurso: fetch directo del `/config` con la cookie y parsear `text_tracks`.
+- **Ruta verificada (2026-10-09):** la URL `vimeo.com/showcase/<id>/video/<vid>` NO sirve con yt-dlp 2026.08 (su API client `web` exige login). Lo que funciona: replicar el flujo del álbum (`_next/viewer` → `showcase/<id>/auth` con password → `api.vimeo.com/albums/<id>/videos?_hashed_pass=…`) para obtener la `player_embed_url` **firmada** (`bypass_privacy=1&h=…&s=…`, expira ~24 h) y pasársela a yt-dlp con `Referer: https://vimeo.com/`. Esa ruta usa el config del player sin login y lista `es-x-autogen` (vtt). Implementado en `pipeline/vimeo.py` + `pipeline/fetch.py` (plan §0.2).
+- Fallback si Vimeo cambia el flujo: `--cookies-from-browser chrome` con el showcase abierto; último recurso: fetch directo del `/config` con la misma query firmada y parsear `text_tracks`.
 - Si una clase no tiene track → la clase queda `BLOQUEADO: sin VTT` y se reporta. Decisión de Robert: no se transcribe localmente.
 
 ## 3. Opciones evaluadas por etapa (con recomendación)
@@ -96,7 +94,7 @@ Mapa mental = MOC (texto) + `MOC-<curso>.canvas` (visual) + graph view. Las imá
 | **Repo local `~/dev/video-course-ai-helper/` (GitHub privado: código, vault, estado) + Drive como destino final y backup crudo** | **Recomendada**: mismo patrón que BD2; el playbook §1.7 documenta ~10% de errores de edición cuando se trabaja en Drive. |
 | Todo en Drive `2026/` | Simple de encontrar, pero Drive + git + archivos grandes = conflictos y archivos "online-only" que ffmpeg no puede leer. Descartada. |
 
-Flujo de datos: `raw/<curso>/<clase>/` (local, gitignored) recibe video + vtt + info.json → se procesa → al cerrar la clase: video + vtt + frames + info.json se **mueven** a Drive `2026/_clases-dump/<curso>/<clase>/` (backup "por las dudas", fuera de las carpetas de cursos, como pidió Robert) y `vault/<curso>/` se **espeja** a Drive `2026/<Curso>/clases/` con rsync. Estimación de espacio: 4 cursos × ~15 clases × ~0.7 GB ≈ 40 GB en Drive; local solo las clases en proceso.
+Flujo de datos: `raw/<curso>/<clase>/` (local, gitignored) recibe video + vtt + info.json → se procesa → al cerrar la clase: video + vtt + frames + info.json se **mueven** a Drive `2026/_clases-dump/<curso>/<clase>/` (backup "por las dudas", fuera de las carpetas de cursos, como pidió Robert) y `vault/<curso>/` se **espeja** a Drive `2026/<Curso>/notas/` con rsync. Estimación de espacio: 4 cursos × ~15 clases × ~0.7 GB ≈ 40 GB en Drive; local solo las clases en proceso.
 
 ## 4. Componentes (cada uno con una responsabilidad)
 | Módulo | Hace | Entrada → Salida |
@@ -131,5 +129,6 @@ Diarización, Q&A con RAG sobre el vault (Claude Code ya lee el vault), export a
 1. URLs + passwords cargados en `.env` (gitignored). 2. Nombres completos en `courses.yaml`. 3. Obsidian instalado. 4. Repo en `~/dev/video-course-ai-helper`, GitHub privado. 5. Sin Whisper ni ASR local.
 
 ## 10. Pendiente
+- Plan de implementación (olas, DoD, código, commits): `docs/superpowers/plans/2026-10-09-video-course-ai-helper.md`.
 - Ajustar `avisos_keywords` con el vocabulario de los profesores (lo hace Robert cuando quiera; hay default razonable).
 - Decidir en F3 si las imágenes del vault van a git normal o a Git LFS (estimado ~300 MB para 60 clases).
