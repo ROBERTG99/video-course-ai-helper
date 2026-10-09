@@ -18,8 +18,16 @@ def frames_table(manifest: Path, max_ocr: int = 200) -> str:
     return "\n".join(rows)
 
 
+def existing_temas_block(temas: list[tuple[str, str]]) -> str:
+    rows = "\n".join(f"- `{slug}` — {title}" for slug, title in temas) or "—"
+    return ("## Temas ya existentes en el curso\n"
+            "Si un tema de esta clase es el mismo concepto que uno de esta lista, reusá EXACTAMENTE ese slug "
+            "en la nota y en temas-candidatos.json (no crees un slug nuevo para lo mismo).\n" + rows)
+
+
 def build_analysis_prompt(
-    meta: dict, transcript: Path, manifest: Path, note_path: Path, temas_path: Path, img_rel: str
+    meta: dict, transcript: Path, manifest: Path, note_path: Path, temas_path: Path, img_rel: str,
+    existing_temas: list[tuple[str, str]] | None = None,
 ) -> str:
     role = (PROMPTS / "analista-clase.md").read_text(encoding="utf-8")
     template = (TEMPLATES / "clase.md").read_text(encoding="utf-8")
@@ -33,6 +41,7 @@ def build_analysis_prompt(
         ),
         "## Plantilla de la nota (respetar frontmatter, secciones y orden)\n```markdown\n" + template + "\n```",
         "## Frames disponibles (podés abrir el archivo con Read para verlo)\n" + frames_table(manifest),
+        existing_temas_block(existing_temas or []),
         "## Transcript\n" + transcript.read_text(encoding="utf-8"),
     ])
 

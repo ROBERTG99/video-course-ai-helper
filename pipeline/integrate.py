@@ -28,6 +28,15 @@ def title_index(vault_course: Path, cands: list[dict] | None = None) -> dict[str
     return idx
 
 
+def slug_titles(vault_course: Path) -> dict[str, str]:
+    """Human title -> slug for every existing tema note of the course."""
+    out: dict[str, str] = {}
+    for p in sorted((vault_course / "temas").glob("*.md")):
+        m = re.search(r"^tema: (.+)$", p.read_text(encoding="utf-8"), re.MULTILINE)
+        out[m.group(1).strip() if m else p.stem] = p.stem
+    return out
+
+
 def upsert_tema(vault_course: Path, course: str, cand: dict, class_id: str, index: dict[str, str] | None = None) -> str:
     """cand: {slug?, titulo, resumen, timestamps:[hh:mm:ss], relacionados:[titulo]} -> created|updated|unchanged.
 

@@ -42,3 +42,14 @@ def test_build_avisos_prompt(tmp_path, monkeypatch):
     for needle in ('"curso": "arqui"', str(tmp_path / "nota.md"), str(tmp_path / "review.md"),
                    "el parcial es el quince"):
         assert needle in out
+
+
+def test_existing_temas_listed(tmp_path):
+    m = tmp_path / "frames.json"
+    m.write_text(json.dumps({"class_id": "c", "sample_every": 10, "frames": []}))
+    t = tmp_path / "transcript.md"
+    t.write_text("[00:00:00] hola\n")
+    out = pb.build_analysis_prompt({"curso": "arqui"}, t, m, tmp_path / "c.md", tmp_path / "t.json", "img/c",
+                                   [("adr", "ADR")])
+    assert "## Temas ya existentes en el curso" in out and "- `adr` — ADR" in out
+    assert out.index("## Temas ya existentes") < out.index("## Transcript")

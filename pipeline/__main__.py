@@ -103,8 +103,9 @@ def prompt(course: str = typer.Option(...), class_id: str = typer.Option(..., "-
     c = config.course(s, course)
     d = config.class_dirs(course, class_id)
     meta = ch.meta_for(c, class_id)
+    temas = sorted((slug, title) for title, slug in integrate.slug_titles(config.VAULT / course).items())
     p = prompt_builder.build_analysis_prompt(meta, d["work"] / "transcript.md", d["work"] / "frames.json",
-                                             d["note"], d["work"] / "temas-candidatos.json", meta["img_rel"])
+                                             d["note"], d["work"] / "temas-candidatos.json", meta["img_rel"], temas)
     (d["work"] / "analysis-prompt.md").write_text(p, encoding="utf-8")
     hits = avisos.excerpts(avisos.read_transcript(d["work"] / "transcript.md"), s.avisos_keywords)
     (d["work"] / "avisos-excerpts.md").write_text(avisos.to_markdown(hits), encoding="utf-8")

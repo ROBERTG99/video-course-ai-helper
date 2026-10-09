@@ -56,3 +56,9 @@ def test_related_titles_resolve_to_real_slugs(tmp_path):
     assert "- [[catalogo-de-atributos-sap]]" in t and "- [[algo-nuevo]]" in t
     it.upsert_tema(vc, "arqui", other, "c1", idx)
     assert it.title_index(vc)["catalogo-de-atributos-del-sap"] == "catalogo-de-atributos-sap"
+
+
+def test_slug_titles(tmp_path):
+    vc = tmp_path / "arqui"
+    it.upsert_tema(vc, "arqui", CAND, "c1")
+    assert it.slug_titles(vc) == {"Arquitectura en capas": "arquitectura-en-capas"}
