@@ -24,7 +24,7 @@ def frontmatter(text: str) -> dict[str, str]:
     return out
 
 
-def validate(note: Path, vault: Path) -> list[str]:
+def validate(note: Path, vault: Path, extra_names: set[str] | None = None) -> list[str]:
     text = note.read_text(encoding="utf-8")
     errs: list[str] = []
     fm = frontmatter(text)
@@ -43,7 +43,7 @@ def validate(note: Path, vault: Path) -> list[str]:
     for rel in IMG.findall(text):
         if not rel.startswith("http") and not (note.parent / rel).exists():
             errs.append(f"imagen inexistente: {rel}")
-    names = {p.stem for p in vault.rglob("*.md")}
+    names = {p.stem for p in vault.rglob("*.md")} | (extra_names or set())
     for link in WIKI.findall(text):
         if link.strip() not in names:
             errs.append(f"wikilink roto: [[{link}]]")

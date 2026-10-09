@@ -77,3 +77,9 @@ def test_section_order(tmp_path):
     )
     note, vault = make(tmp_path, swapped)
     assert "secciones fuera de orden" in nv.validate(note, vault)
+
+
+def test_extra_names_count_as_existing(tmp_path):
+    note, vault = make(tmp_path, GOOD.replace("[[arquitectura-en-capas]]", "[[tema-nuevo]]"))
+    assert any("[[tema-nuevo]]" in e for e in nv.validate(note, vault))
+    assert nv.validate(note, vault, extra_names={"tema-nuevo"}) == []
