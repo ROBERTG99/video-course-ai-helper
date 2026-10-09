@@ -13,3 +13,11 @@
 - **Espejo en Drive en `<Curso>/notas/`** (no `clases/`): incluye temas y MOC, no solo clases.
 - **Commits por tarea del plan autorizados** (2026-10-09); fuera del plan sigue el "ok" previo.
 - **Videos solo en `_clases-dump`** (no duplicados en la carpeta del curso); la nota lleva `video_path`. Por qué: ~40 GB, duplicarlos no aporta.
+- **Track `en-x-autogen` se acepta cuando es el único** (2026-10-09): Vimeo etiqueta mal el idioma en 5 clases pero el texto es español; `pick_vtt` prefiere `es-x-autogen` y si no hay, toma el que exista. Sigue sin haber ASR local.
+- **`validate` antes de `integrate` con slugs propios** (2026-10-09): el validador cuenta como existentes los slugs de `temas-candidatos.json` de la clase; evita falsos wikilinks rotos sin reordenar las etapas.
+- **Agentes por clase leen su propio prompt de `work/`** (2026-10-09): `analysis-prompt.md`/`avisos-prompt.md` son únicos por clase (nadie más los lee), así que el orquestador le indica la ruta en vez de pegar 70K chars; respeta el espíritu de §4.4 (no N agentes sobre el mismo archivo) y ahorra contexto del orquestador.
+- **Verificadores opus en paralelo dentro del tope de 4** (2026-10-09): el plan decía secuencial; se corren intercalados con analistas sin superar 4 agentes simultáneos.
+- **`integrate` por tanda, no solo al cerrar el curso** (2026-10-09): así la tanda siguiente ve los temas existentes y reusa slugs.
+- **Pilot sin revisión humana previa a las tandas** (2026-10-09): Robert pidió "arrancar y no frenar hasta terminar"; el checkpoint humano de T12 queda como revisión posterior. Cualquier ajuste se aplica con `--force` por clase.
+- **Verificador opus con ≤3 clases por despacho** (2026-10-09): con 4 clases topó `maxTurns: 10` (los informes se escribieron igual).
+- **Duplicados de temas: el integrador propone, el script fusiona** (`merge-temas a=b`), nunca el agente borra notas.
