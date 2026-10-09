@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import difflib
 import re
 import unicodedata
 from pathlib import Path
@@ -154,3 +155,40 @@ def merge_tema(vault_course: Path, src: str, dst: str, graveyard: Path, work_cou
         if new != text:
             cj.write_text(new, encoding="utf-8")
     return changed
+
+
+def closest_slug(name: str, stems: set[str]) -> str | None:
+    """Best existing slug for a dangling link: near-identical spelling first, then a unique prefix relation."""
+    if name in stems:
+        return name
+    close = difflib.get_close_matches(name, sorted(stems), n=1, cutoff=0.8)
+    if close:
+        return close[0]
+    pref = [s for s in stems if s.startswith(name + "-") or name.startswith(s + "-")]
+    return pref[0] if len(pref) == 1 else None
+
+
+def relink_dangling(vault_course: Path) -> int:
+    """Point [[links]] in temas/ that match no note to the closest existing tema. Returns links fixed."""
+    temas = vault_course / "temas"
+    stems = {p.stem for p in vault_course.rglob("*.md")}
+    fixed = 0
+    for p in temas.glob("*.md"):
+        text = p.read_text(encoding="utf-8")
+        others = stems - {p.stem}
+
+        def repl(m: re.Match, others: set[str] = others) -> str:
+            nonlocal fixed
+            name = m.group(1).strip()
+            if name in stems:
+                return m.group(0)
+            best = closest_slug(name, others)
+            if not best:
+                return m.group(0)
+            fixed += 1
+            return f"[[{best}"
+
+        new = re.sub(r"\[\[([^\]|#]+)(?=[\]|#])", repl, text)
+        if new != text:
+            p.write_text(new, encoding="utf-8")
+    return fixed

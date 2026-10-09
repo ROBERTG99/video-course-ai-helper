@@ -192,6 +192,9 @@ def integrate_cmd(course: str = typer.Option(...), class_id: str | None = typer.
             counts[integrate.upsert_tema(vc, course, cand, cid, index)] += 1
         state.mark(d["state"], "integrate", "ok", **counts)
         con.print(f"{cid}: {counts}")
+    if vc.exists():
+        n = integrate.relink_dangling(vc)
+        con.print(f"links de temas re-apuntados: {n}") if n else None
     integrate.regen_moc(vc, course, c.full_name)
     integrate.regen_avisos(vc, course)
     integrate.regen_calendario(config.VAULT, list(s.courses))

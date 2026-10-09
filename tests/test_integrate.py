@@ -80,3 +80,14 @@ def test_merge_tema_folds_and_rewrites_links(tmp_path):
     d = (vc / "temas" / "arquitectura-en-capas.md").read_text(encoding="utf-8")
     assert "Otra idea." in d and "- [[c2]] · 00:01:00" in d and "- [[arquitectura-en-capas]]\n" not in d
     assert '"slug": "arquitectura-en-capas"' in (work / "c2" / "temas-candidatos.json").read_text()
+
+
+def test_relink_dangling(tmp_path):
+    vc = tmp_path / "arqui"
+    (vc / "temas").mkdir(parents=True)
+    for s in ("publish-subscribe", "mongodb-base-no-relacional", "redis", "redis-cache"):
+        (vc / "temas" / f"{s}.md").write_text("x", encoding="utf-8")
+    t = vc / "temas" / "a.md"
+    t.write_text("- [[publish-and-subscribe]]\n- [[mongodb]]\n- [[redis-como-cosa]]\n- [[nada-que-ver]]\n", encoding="utf-8")
+    assert it.relink_dangling(vc) == 3
+    assert t.read_text() == "- [[publish-subscribe]]\n- [[mongodb-base-no-relacional]]\n- [[redis]]\n- [[nada-que-ver]]\n"
