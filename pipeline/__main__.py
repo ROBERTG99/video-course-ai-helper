@@ -234,8 +234,10 @@ def sync_cmd(course: str = typer.Option(...), class_id: str | None = typer.Optio
         raise typer.BadParameter(f"DRIVE_ROOT no definido o inexistente: {s.drive_root}")
     for cid in _classes(course, "sync", class_id, force):
         d = config.class_dirs(course, cid)
+        dump = s.drive_root / "_clases-dump" / course / cid
         if d["raw"].exists():
             sync_mod.move_raw(d["raw"], s.drive_root / "_clases-dump", course, cid)
+        sync_mod.repoint_video(d["note"], dump / "video.mp4")
         state.mark(d["state"], "sync", "ok")
         con.print(f"{cid}: crudo movido a _clases-dump")
     sync_mod.mirror_vault(config.VAULT / course, s.drive_root / c.drive_folder)

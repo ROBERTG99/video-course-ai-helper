@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -43,3 +44,14 @@ def mirror_vault(vault_course: Path, drive_course_dir: Path) -> None:
          f"{vault_course}/", f"{dest}/"],
         check=True, capture_output=True,
     )
+
+
+def repoint_video(note: Path, video: Path) -> bool:
+    """After the raw media moved to the Drive dump, point the note's `video_path` frontmatter at it."""
+    if not note.exists() or not video.exists():
+        return False
+    text = note.read_text(encoding="utf-8")
+    new = re.sub(r"^video_path: .*$", f"video_path: {video}", text, count=1, flags=re.MULTILINE)
+    if new != text:
+        note.write_text(new, encoding="utf-8")
+    return new != text

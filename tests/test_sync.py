@@ -61,3 +61,14 @@ def test_mirror_vault_missing_source_raises(tmp_path):
     with pytest.raises(RuntimeError):
         sync.mirror_vault(tmp_path / "vault" / "nope", drive_course)
     assert (drive_course / "notas" / "precious.md").exists()
+
+
+def test_repoint_video(tmp_path):
+    note = tmp_path / "c1.md"
+    note.write_text("---\ncurso: arqui\nvideo_path: raw/arqui/c1/video.mp4\n---\n# x\n", encoding="utf-8")
+    video = tmp_path / "dump" / "video.mp4"
+    assert not sync.repoint_video(note, video)
+    video.parent.mkdir()
+    video.write_bytes(b"v")
+    assert sync.repoint_video(note, video)
+    assert f"video_path: {video}\n" in note.read_text()
