@@ -1,8 +1,10 @@
 # secrets
 .env
-# raw media and per-class state (big / regenerable)
+# results never go to GitHub: Obsidian vault, raw media, per-class state, intermediate work
+vault/
 raw/
 state/
+work/
 # python
 .venv/
 __pycache__/
@@ -14,6 +16,3 @@ __pycache__/
 Icon?
 *.gdoc
 .tmp.drivedownload*
-# obsidian workspace cache (vault config is committed, workspace is not)
-vault/.obsidian/workspace*.json
-vault/.obsidian/cache
