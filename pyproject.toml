@@ -1,0 +1,27 @@
+[project]
+name = "video-course-ai-helper"
+version = "0.1.0"
+description = "Vimeo class recordings -> transcript, key frames, AI notes, Obsidian vault"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "yt-dlp[default,curl-cffi]>=2026.8.19",
+  "curl_cffi>=0.10",
+  "imagehash>=4.3",
+  "pillow>=10",
+  "pytesseract>=0.3.13",
+  "webvtt-py>=0.5",
+  "pyyaml>=6",
+  "typer>=0.15",
+  "rich>=13",
+  "python-dotenv>=1.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
