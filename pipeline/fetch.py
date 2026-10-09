@@ -28,6 +28,8 @@ def ydl_opts(dest: Path, subs_only: bool, max_height: int = 720) -> dict:
         "no_warnings": True,
         "noprogress": True,
         "retries": 5,
+        "fragment_retries": 10,
+        "concurrent_fragment_downloads": 8,  # Vimeo HLS: ~0.7 MB/s per stream, fragments in parallel scale it
     }
 
 
