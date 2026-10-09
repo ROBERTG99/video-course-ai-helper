@@ -1,0 +1,58 @@
+# slug: internal id used everywhere (folders, state, vault). drive_folder: existing folder under $DRIVE_ROOT.
+# full_name is used in note titles.
+courses:
+  arqui:
+    full_name: "Arquitectura de Software"
+    drive_folder: "ArqSoft"
+    env_prefix: "ARQUI"
+  negsoft:
+    full_name: "Modelos de Negocios de Software"
+    drive_folder: "NegSoft"
+    env_prefix: "NEGSOFT"
+  dbpt:
+    full_name: "Desarrollo de Productos de Base Tecnológica"
+    drive_folder: "DBPT"
+    env_prefix: "DBPT"
+  isa2:
+    full_name: "Ingeniería de Software Ágil 2"
+    drive_folder: "ISA2"
+    env_prefix: "ISA2"
+
+# Frame extraction defaults (tunable per course after the pilot)
+frames:
+  sample_every_seconds: 10
+  phash_distance_same: 6        # consecutive frames with hamming distance <= this are the same "slide"
+  min_slide_seconds: 8          # ignore slides shown for less than this
+  keep_labels: [slide, code, diagram, whiteboard, demo, document]
+  drop_labels: [speaker, blank, transition]
+  export_width: 1280
+
+# Transcript
+transcript:
+  sub_langs: ["es.*", "en.*"]
+  paragraph_seconds: 30
+  chunk_minutes: 20
+  # No local ASR fallback: a class without a Vimeo text track is marked BLOCKED and reported.
+
+# Keyword prefilter for "avisos del profesor" (recall net; the LLM decides what matters)
+avisos_keywords:
+  - parcial
+  - examen
+  - entrega
+  - obligatorio
+  - fecha
+  - plazo
+  - nota
+  - puntos
+  - "va a estar"
+  - "van a tener"
+  - "tienen que"
+  - "no se acepta"
+  - rúbrica
+  - defensa
+  - presentación
+  - grupo
+  - gestor
+  - recuperación
+  - importante
+  - "ojo con"

@@ -1,0 +1,19 @@
+# secrets
+.env
+# raw media and per-class state (big / regenerable)
+raw/
+state/
+# python
+.venv/
+__pycache__/
+*.pyc
+.ruff_cache/
+.pytest_cache/
+# macOS / Drive sync
+.DS_Store
+Icon?
+*.gdoc
+.tmp.drivedownload*
+# obsidian workspace cache (vault config is committed, workspace is not)
+vault/.obsidian/workspace*.json
+vault/.obsidian/cache
