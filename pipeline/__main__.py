@@ -111,6 +111,17 @@ def prompt(course: str = typer.Option(...), class_id: str = typer.Option(..., "-
     con.print(f"{class_id}: prompt {len(p)} chars, {len(hits)} fragmentos de avisos -> {ch.relpath(d['work'])}")
 
 
+@app.command("avisos-prompt")
+def avisos_prompt(course: str = typer.Option(...), class_id: str = typer.Option(..., "--class")):
+    """Build work/<course>/<class>/avisos-prompt.md for the verificador-avisos agent (needs the note + excerpts)."""
+    c = config.course(_settings(), course)
+    d = config.class_dirs(course, class_id)
+    p = prompt_builder.build_avisos_prompt(ch.meta_for(c, class_id), d["work"] / "avisos-excerpts.md", d["note"],
+                                           d["work"] / "avisos-review.md")
+    (d["work"] / "avisos-prompt.md").write_text(p, encoding="utf-8")
+    con.print(f"Prompt listo: {ch.relpath(d['work'] / 'avisos-prompt.md')} -> despachar agente verificador-avisos (opus)")
+
+
 @app.command()
 def analyze(course: str = typer.Option(...), class_id: str = typer.Option(..., "--class"),
             runner_name: str = typer.Option("agent", "--runner"), budget: float = 3.0, force: bool = False):

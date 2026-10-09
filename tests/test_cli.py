@@ -103,3 +103,13 @@ def test_analyze_agent_builds_prompt_when_missing(tmp_path, monkeypatch):
     assert (d["work"] / "analysis-prompt.md").exists()
     assert not state.is_done(d["state"], "analyze")
     assert "analista-clase" in r.output
+
+
+def test_avisos_prompt_command(tmp_path, monkeypatch):
+    d = _setup_class(tmp_path, monkeypatch)
+    d["work"].mkdir(parents=True)
+    (d["work"] / "avisos-excerpts.md").write_text("# Fragmentos\n\n## [00:00:30] parcial\nEl parcial es el 15.\n", encoding="utf-8")
+    r = runner.invoke(app, ["avisos-prompt", "--course", "arqui", "--class", "2026-09-30-clase-01"])
+    assert r.exit_code == 0, r.output
+    text = (d["work"] / "avisos-prompt.md").read_text(encoding="utf-8")
+    assert "El parcial es el 15." in text and "avisos-review.md" in text and "verificador-avisos" in r.output
