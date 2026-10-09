@@ -118,3 +118,39 @@ def regen_calendario(vault: Path, courses: list[str]) -> Path:
     out = vault / "calendario.md"
     out.write_text("\n".join(rows) + "\n", encoding="utf-8")
     return out
+
+
+def merge_tema(vault_course: Path, src: str, dst: str, graveyard: Path, work_course: Path | None = None) -> int:
+    """Fold tema `src` into `dst`: move its ideas and 'Visto en' lines, rewrite [[src]] links across the course
+    vault (and slugs in work/*/temas-candidatos.json), and park the old note in `graveyard`. Returns files rewritten."""
+    temas = vault_course / "temas"
+    sp, dp = temas / f"{src}.md", temas / f"{dst}.md"
+    if not sp.exists() or not dp.exists():
+        raise FileNotFoundError(f"merge needs both temas: {sp.name}, {dp.name}")
+    s_text, d_text = sp.read_text(encoding="utf-8"), dp.read_text(encoding="utf-8")
+    ideas = section(s_text, "Ideas clave")
+    if ideas and ideas not in d_text:
+        d_text = re.sub(r"^## Ideas clave\n", lambda m: m.group(0) + ideas + "\n", d_text, count=1, flags=re.MULTILINE)
+    for line in section(s_text, "Visto en").splitlines():
+        m = re.match(r"- \[\[([^\]]+)\]\]", line)
+        if m and f"[[{m.group(1)}]]" not in section(d_text, "Visto en"):
+            d_text = d_text.rstrip("\n") + "\n" + line + "\n"
+    dp.write_text(d_text, encoding="utf-8")
+    graveyard.mkdir(parents=True, exist_ok=True)
+    sp.replace(graveyard / sp.name)
+    link = re.compile(rf"\[\[{re.escape(src)}(?=[\]|#])")
+    changed = 0
+    for p in vault_course.rglob("*.md"):
+        text = p.read_text(encoding="utf-8")
+        new = link.sub(f"[[{dst}", text)
+        if p == dp:  # a tema must not list itself as related
+            new = re.sub(rf"^- \[\[{re.escape(dst)}\]\]\n", "", new, flags=re.MULTILINE)
+        if new != text:
+            p.write_text(new, encoding="utf-8")
+            changed += 1
+    for cj in (work_course.glob("*/temas-candidatos.json") if work_course else []):
+        text = cj.read_text(encoding="utf-8")
+        new = text.replace(f'"slug": "{src}"', f'"slug": "{dst}"')
+        if new != text:
+            cj.write_text(new, encoding="utf-8")
+    return changed

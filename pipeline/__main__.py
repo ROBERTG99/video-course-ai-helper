@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -194,6 +195,17 @@ def integrate_cmd(course: str = typer.Option(...), class_id: str | None = typer.
     integrate.regen_moc(vc, course, c.full_name)
     integrate.regen_avisos(vc, course)
     integrate.regen_calendario(config.VAULT, list(s.courses))
+
+
+@app.command("merge-temas")
+def merge_temas(pairs: Annotated[list[str], typer.Argument(help="duplicado=canonico")], course: str = typer.Option(...)):
+    """Fold duplicate topics into their canonical slug and rewrite every wikilink (then run integrate)."""
+    vc = config.VAULT / course
+    for pair in pairs:
+        src, _, dst = pair.partition("=")
+        n = integrate.merge_tema(vc, src.strip(), dst.strip(), config.WORK / course / "_merged-temas", config.WORK / course)
+        con.print(f"{src} -> {dst}: {n} archivos reescritos")
+    integrate.regen_moc(vc, course, config.course(_settings(), course).full_name)
 
 
 @app.command("canvas")

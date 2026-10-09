@@ -62,3 +62,21 @@ def test_slug_titles(tmp_path):
     vc = tmp_path / "arqui"
     it.upsert_tema(vc, "arqui", CAND, "c1")
     assert it.slug_titles(vc) == {"Arquitectura en capas": "arquitectura-en-capas"}
+
+
+def test_merge_tema_folds_and_rewrites_links(tmp_path):
+    vc = tmp_path / "arqui"
+    work = tmp_path / "work"
+    (work / "c2").mkdir(parents=True)
+    (work / "c2" / "temas-candidatos.json").write_text('[{"slug": "capas"}]', encoding="utf-8")
+    it.upsert_tema(vc, "arqui", {**CAND, "relacionados": ["Capas"]}, "c1")
+    it.upsert_tema(vc, "arqui", {"slug": "capas", "titulo": "Capas", "resumen": "Otra idea.", "timestamps": ["00:01:00"]}, "c2")
+    (vc / "clases").mkdir()
+    note = vc / "clases" / "c2.md"
+    note.write_text("- [[capas]] y [[capas|las capas]]\n", encoding="utf-8")
+    n = it.merge_tema(vc, "capas", "arquitectura-en-capas", tmp_path / "grave", work)
+    assert n >= 2 and not (vc / "temas" / "capas.md").exists() and (tmp_path / "grave" / "capas.md").exists()
+    assert note.read_text() == "- [[arquitectura-en-capas]] y [[arquitectura-en-capas|las capas]]\n"
+    d = (vc / "temas" / "arquitectura-en-capas.md").read_text(encoding="utf-8")
+    assert "Otra idea." in d and "- [[c2]] · 00:01:00" in d and "- [[arquitectura-en-capas]]\n" not in d
+    assert '"slug": "arquitectura-en-capas"' in (work / "c2" / "temas-candidatos.json").read_text()
