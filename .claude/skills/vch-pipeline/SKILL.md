@@ -32,6 +32,7 @@ uv run python -m pipeline fetch --course arqui [--class ID] [--subs-only] [--for
 uv run python -m pipeline transcript --course arqui [--class ID]
 uv run python -m pipeline frames --course arqui [--class ID]
 uv run python -m pipeline prompt --course arqui --class ID             # arma analysis-prompt.md + avisos-excerpts.md
+uv run python -m pipeline avisos-prompt --course arqui --class ID      # arma avisos-prompt.md para verificador-avisos (opus)
 uv run python -m pipeline analyze --course arqui --class ID --runner agent|claude-p --budget 3
 uv run python -m pipeline validate --course arqui [--class ID]
 uv run python -m pipeline integrate --course arqui && uv run python -m pipeline canvas --course arqui
@@ -41,11 +42,11 @@ uv run python -m pipeline status [--course arqui]
 Cada etapa deja `ok|blocked` en `state/<curso>/<class_id>.json`; una etapa `ok` no se repite sin `--force`.
 
 ## Agentes (playbook: ≤4 simultáneos, model explícito, contexto en el prompt)
-- `analista-clase` (sonnet): recibe el contenido de `work/<c>/<id>/analysis-prompt.md`; escribe la nota + `temas-candidatos.json`.
-- `verificador-avisos` (opus, el único): recibe el prompt de `prompt_builder.build_avisos_prompt`; escribe `avisos-review.md`; no edita la nota.
+- `analista-clase` (sonnet): el orquestador le indica leer `work/<c>/<id>/analysis-prompt.md` (un archivo por clase, nunca compartido); escribe la nota + `temas-candidatos.json`. También aplica correcciones del verificador (solo ⚠️ y Dudas).
+- `verificador-avisos` (opus, el único): lee `work/<c>/<id>/avisos-prompt.md` (de `pipeline avisos-prompt`); escribe `avisos-review.md`; no edita la nota.
 - `integrador-vault` (sonnet): organiza el outline del MOC sobre los marcadores generados.
 - `inventario` (haiku): tablas de estado.
-Tandas: 4 clases → 4 analistas en paralelo → `validate` → 1 reintento → PROGRESS.md. Opus solo al cerrar cada curso.
+Tandas: 4 clases → 4 analistas en paralelo → `analyze` (marca ok) → `validate` → 1 reintento → verificadores (opus) → analista aplica revisión → PROGRESS.md. Al cerrar curso: `integrate` → `integrador-vault` → `canvas` → `sync`.
 
 ## Clase nueva de la semana
 `/nueva-clase <curso>` (ver `.claude/commands/nueva-clase.md`). Si `claude -p` no está disponible, `--runner agent` y despachar el analista a mano.

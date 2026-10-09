@@ -1,15 +1,30 @@
 # PROGRESS — Video Course AI Helper
-Última actualización: 2026-10-09
+Última actualización: 2026-10-09 (sesión de ejecución)
 
 ## Estado por fase
 - F0 Bootstrap: ✅ 2026-10-09 — repo GitHub privado, `.env`, ffmpeg 9 + tesseract spa, `uv sync`, Task 1 (config/state + tests) verde, plan de implementación escrito, skill `vch-pipeline`, agentes, comandos. Retrieval verificado en arqui (`es-x-autogen` vía `player_embed_url` firmada). Inventario: arqui 15 · negsoft 7 · dbpt 8 · isa2 15 = 45 clases.
-- Olas 1–2 del plan (T2–T9): ⬜ (próximo)
-- Ola 3 (T10–T11) + Task 12 pilot: ⬜
-- Task 13 tandas: ⬜
-- Task 14 rutina `/nueva-clase`: ⬜
+- Ola 1 (T2–T5): ✅ 2026-10-09 — vimeo/naming, vtt, frames+ocr, note_validate. Fixes al plan: `vtt.paragraphs` corta antes de agregar el cue; `frames.export` cae a `t` si el punto medio excede el video.
+- Ola 2 (T6–T9): ✅ 2026-10-09 — fetch (prefiere `es-x-autogen`, paths relativos a ROOT), avisos+prompt_builder+runner, integrate+canvas, sync (no borra en Drive; falla si falta vault).
+- Ola 3 (T10–T11): ✅ 2026-10-09 — CLI 12 comandos (55 tests verdes); prompts/agentes. `validate` acepta slugs de temas-candidatos.json (temas se crean en integrate); `analyze --runner agent` marca ok si nota+temas existen.
+- VTT + transcript: ✅ 45/45 (arqui 15 · negsoft 7 · dbpt 8 · isa2 15). 5 clases traen solo `en-x-autogen` con texto en español (dbpt 01, 05 · isa2 04, 05, 09): se usan.
+- Task 12 pilot (arqui 2026-08-17-clase-01): ✅ técnico 2026-10-09 — 163 segmentos / 43 frames (sin cámara), nota 5.7k palabras, validate OK, verificador opus: 8 faltantes · 1 corrección · 7 ambiguos → aplicados; 22 temas, MOC con outline, canvas 22 nodos file. ⏳ Revisión de Robert pendiente (abrir `vault/` en Obsidian).
+  Ajustes del pilot: `avisos-prompt` en el CLI; links `Relacionado` resueltos a slugs reales; el prompt del analista lista los temas existentes del curso (reuso de slugs); fetch HLS con fragmentos concurrentes (~3 MB/s).
+- Task 13 tandas: ✅ 2026-10-09 — 45/45 clases con las 7 etapas `ok` (fetch → sync); avisos verificados por opus en las 45 y aplicados.
+  - arqui 15 · 161 temas (2 duplicados fusionados) · canvas 198 nodos → `ArqSoft/notas/`
+  - negsoft 7 · 91 temas (4 fusionados) · canvas 128 → `NegSoft/notas/`
+  - dbpt 8 · 112 temas · canvas 139 → `DBPT/notas/`
+  - isa2 15 · 167 temas · canvas 198 → `ISA2/notas/`
+  - Crudo (≈19 GB) en `_clases-dump/<curso>/<clase>/`; `video_path` de cada nota apunta ahí. `calendario.md` con 48 líneas fechadas.
+  - Orden: arqui → negsoft → dbpt → isa2 (Robert no fijó prioridad). Costo: corridas como agentes en sesión (no hay `cost_usd` por clase).
+- Task 14 rutina `/nueva-clase`: ✅ 2026-10-09 — comando reescrito con el flujo real (fetch → transcript/frames → analyze → validate → avisos-prompt + verificador → integrate/canvas/sync); CLAUDE.md y skill actualizados. ⏳ Sin probar con un video nuevo real (no hay clase nueva publicada todavía).
 
 ## Bloqueos
 - Ninguno.
 
+## Herramientas agregadas en ejecución
+- CLI: `avisos-prompt`, `merge-temas a=b ...`; `integrate` re-apunta links fantasma (`relink_dangling`); `sync` re-apunta `video_path` al dump.
+
 ## Próximo paso
-Nueva sesión en `~/dev/video-course-ai-helper` → `/retomar` → ejecutar Ola 1 del plan (T2, T3, T4, T5 en paralelo, 4 agentes sonnet) con `superpowers:subagent-driven-development`. Pendiente de Robert: abrir `vault/` en Obsidian cuando exista (`init-vault` llega en T10).
+1. Robert: abrir `vault/` como bóveda en Obsidian y revisar el pilot (`vault/arqui/clases/2026-08-17-clase-01.md`) + 1 nota por curso. Ajustes de plantilla/prompts → DECISIONES.md → re-correr con `--force`.
+2. Próxima clase publicada: `/nueva-clase <curso>` (primera prueba real de la rutina).
+3. Notas raíz (`00-MOC-2026.md`, `calendario.md`) no se espejan a Drive (sync es por curso): decidir si agregarlas.

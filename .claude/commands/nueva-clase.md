@@ -1,6 +1,8 @@
-Argumento: `$ARGUMENTS` = slug del curso (arqui|negsoft|dbpt|isa2). Cargá el skill `vch-pipeline` primero. Hasta que Task 14 del plan esté ✅ en PROGRESS.md, este comando es la rutina objetivo; si falta una etapa del CLI, decilo y parás.
-1. `uv run python -m pipeline fetch --course $ARGUMENTS` (incremental: solo clases nuevas). Si no hay nuevas, decirlo y terminar.
-2. `uv run python -m pipeline transcript --course $ARGUMENTS && uv run python -m pipeline frames --course $ARGUMENTS`.
-3. Por cada clase nueva (`status`): `uv run python -m pipeline analyze --course $ARGUMENTS --class <id> --runner claude-p --budget 3`. Si `claude -p` no está disponible o falla, `--runner agent` y despachar `analista-clase` con el prompt.
-4. `validate` → si falla, corregir con el analista (1 vez) → prompt de avisos y despachar `verificador-avisos` (opus) → aplicar faltantes → `integrate` → `canvas` → `sync`.
-5. Reportar: ruta de la nota, avisos nuevos (copiar la sección ⚠️), costo (`state`), y si algo quedó `blocked`, el error exacto. Actualizar `_meta/PROGRESS.md`.
+Argumento: `$ARGUMENTS` = slug del curso (arqui|negsoft|dbpt|isa2). Cargá el skill `vch-pipeline` primero. Todos los comandos son `uv run python -m pipeline <cmd> --course $ARGUMENTS ...`.
+1. `fetch` (incremental: solo clases nuevas, video + VTT; la URL firmada expira ~24 h, por eso lista y baja en la misma corrida). Si no hay nuevas, decirlo y terminar. Si una clase queda `blocked` (sin VTT), reportarla y seguir con las demás.
+2. `transcript` y `frames` (sin `--class`: procesan todo lo pendiente).
+3. Por cada clase nueva (ver `status`): `analyze --class <id> --runner claude-p --budget 3`. Si `claude -p` no está disponible o falla: `analyze --class <id>` (runner agent) → despachar `analista-clase` (sonnet) indicándole que lea `work/$ARGUMENTS/<id>/analysis-prompt.md` → al volver, `analyze --class <id>` otra vez para marcarlo ok.
+4. `validate --class <id>` → si hay errores, pasárselos al analista (1 reintento) y re-validar con `--force`.
+5. `avisos-prompt --class <id>` → despachar `verificador-avisos` (opus) indicándole que lea `work/$ARGUMENTS/<id>/avisos-prompt.md` → si hay FALTA/CORREGIR/AMBIGUO, despachar `analista-clase` (sonnet) para aplicarlos SOLO en ⚠️ y Dudas → `validate --class <id> --force`.
+6. `integrate` → `canvas` → `sync` (mueve el crudo a `_clases-dump` y espeja `vault/$ARGUMENTS` a Drive). Si aparecieron temas nuevos que no están en el `## Mapa` del MOC, despachar `integrador-vault` (sonnet) y volver a correr `canvas`.
+7. Reportar: ruta de la nota, avisos nuevos (copiar la sección ⚠️), costo (`state`, solo si fue claude-p) y cualquier `blocked` con el error exacto. Actualizar `_meta/PROGRESS.md`.
