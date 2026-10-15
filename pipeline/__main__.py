@@ -12,10 +12,13 @@ from . import (
     canvas,
     config,
     integrate,
+    migrate,
     note_validate,
+    notes_clean,
     prompt_builder,
     runner,
     state,
+    units,
     vtt,
 )
 from . import cli_helpers as ch
@@ -29,6 +32,26 @@ con = Console(width=200)
 
 def _settings():
     return config.load_settings()
+
+
+def _units_json(course: str):
+    return config.WORK / course / "units.json"
+
+
+def _temas_base(course: str):
+    """Dir holding `temas/`: work/<c> once the course moved to unit documents, else vault/<c>."""
+    return config.WORK / course if _units_json(course).exists() else config.VAULT / course
+
+
+def _full_name(course: str) -> str:
+    s = _settings()
+    if course not in s.courses:
+        raise typer.BadParameter(f"unknown course '{course}' (known: {', '.join(s.courses)})")
+    return s.courses[course].full_name
+
+
+def _class_stems(course: str) -> set[str]:
+    return {p.stem for p in (config.VAULT / course / "clases").glob("*.md")}
 
 
 def _classes(course: str, stage: str, class_id: str | None, force: bool) -> list[str]:
@@ -104,7 +127,7 @@ def prompt(course: str = typer.Option(...), class_id: str = typer.Option(..., "-
     c = config.course(s, course)
     d = config.class_dirs(course, class_id)
     meta = ch.meta_for(c, class_id)
-    temas = sorted((slug, title) for title, slug in integrate.slug_titles(config.VAULT / course).items())
+    temas = sorted((slug, title) for title, slug in integrate.slug_titles(_temas_base(course)).items())
     p = prompt_builder.build_analysis_prompt(meta, d["work"] / "transcript.md", d["work"] / "frames.json",
                                              d["note"], d["work"] / "temas-candidatos.json", meta["img_rel"], temas)
     (d["work"] / "analysis-prompt.md").write_text(p, encoding="utf-8")
@@ -156,7 +179,7 @@ def analyze(course: str = typer.Option(...), class_id: str = typer.Option(..., "
 @app.command()
 def validate(course: str = typer.Option(...), class_id: str | None = typer.Option(None, "--class"),
              force: bool = False):
-    """Validate the class note (frontmatter, sections, images, wikilinks, timestamps)."""
+    """Validate the class note (frontmatter, sections, images, wikilinks)."""
     for cid in _classes(course, "validate", class_id, force):
         d = config.class_dirs(course, cid)
         if not d["note"].exists():
@@ -167,6 +190,7 @@ def validate(course: str = typer.Option(...), class_id: str | None = typer.Optio
         cands_path = d["work"] / "temas-candidatos.json"
         if cands_path.exists():  # topics are created later by `integrate`: their links are not broken
             extra = {c.get("slug") or integrate.slugify(c["titulo"]) for c in ch.load_json(cands_path)}
+        extra |= {p.stem for p in (config.WORK / course / "temas").glob("*.md")}  # archived temas still resolve
         errs = note_validate.validate(d["note"], config.VAULT, extra)
         state.mark(d["state"], "validate", "ok" if not errs else "blocked", errors=errs)
         con.print(f"{cid}: {'OK' if not errs else errs}")
@@ -174,11 +198,14 @@ def validate(course: str = typer.Option(...), class_id: str | None = typer.Optio
 
 @app.command("integrate")
 def integrate_cmd(course: str = typer.Option(...), class_id: str | None = typer.Option(None, "--class"),
-                  force: bool = False):
-    """Merge temas-candidatos into the vault and regenerate MOC / avisos / calendario."""
+                  force: bool = False,
+                  assign: Annotated[list[str] | None, typer.Option(help="TEMA=UNIT_SLUG (repetible)")] = None):
+    """Merge temas-candidatos into the temas dir and regenerate MOC / avisos / calendario."""
     s = _settings()
-    c = config.course(s, course)
+    full_name = _full_name(course)
     vc = config.VAULT / course
+    unit_mode = _units_json(course).exists()
+    base = _temas_base(course)
     for cid in _classes(course, "integrate", class_id, force):
         d = config.class_dirs(course, cid)
         cands_path = d["work"] / "temas-candidatos.json"
@@ -187,15 +214,33 @@ def integrate_cmd(course: str = typer.Option(...), class_id: str | None = typer.
             continue
         counts = {"created": 0, "updated": 0, "unchanged": 0}
         cands = ch.load_json(cands_path)
-        index = integrate.title_index(vc, cands)
+        index = integrate.title_index(base, cands)
         for cand in cands:
-            counts[integrate.upsert_tema(vc, course, cand, cid, index)] += 1
+            counts[integrate.upsert_tema(base, course, cand, cid, index)] += 1
         state.mark(d["state"], "integrate", "ok", **counts)
         con.print(f"{cid}: {counts}")
-    if vc.exists():
-        n = integrate.relink_dangling(vc)
+    if (base / "temas").exists():
+        n = integrate.relink_dangling(base, _class_stems(course) if unit_mode else None)
         con.print(f"links de temas re-apuntados: {n}") if n else None
-    integrate.regen_moc(vc, course, c.full_name)
+    if unit_mode:
+        uj = _units_json(course)
+        us = units.load_units(uj)
+        by_slug = {u.slug: u for u in us}
+        for pair in assign or []:
+            tema, _, unit_slug = pair.partition("=")
+            if unit_slug.strip() not in by_slug:
+                raise typer.BadParameter(f"unidad inexistente: {unit_slug} (hay: {', '.join(by_slug)})")
+            by_slug[unit_slug.strip()].add_tema(tema.strip())
+            con.print(f"{tema.strip()} -> {unit_slug.strip()}")
+        if assign:
+            units.save_units(uj, us)
+        placed = {t for u in us for t in u.temas}
+        new = sorted(p.stem for p in (base / "temas").glob("*.md") if p.stem not in placed)
+        if new:
+            con.print(f"temas NUEVOS sin unidad ({len(new)}): {', '.join(new)} -> asignar con --assign TEMA=UNIT_SLUG")
+        units.regen_moc_units(vc, course, full_name, us)
+    else:
+        integrate.regen_moc(vc, course, full_name)
     integrate.regen_avisos(vc, course)
     integrate.regen_calendario(config.VAULT, list(s.courses))
 
@@ -204,24 +249,42 @@ def integrate_cmd(course: str = typer.Option(...), class_id: str | None = typer.
 def merge_temas(pairs: Annotated[list[str], typer.Argument(help="duplicado=canonico")], course: str = typer.Option(...)):
     """Fold duplicate topics into their canonical slug and rewrite every wikilink (then run integrate)."""
     vc = config.VAULT / course
+    unit_mode = _units_json(course).exists()
+    base = _temas_base(course)
+    roots = [base / "temas", vc / "clases"] if unit_mode else None
     for pair in pairs:
         src, _, dst = pair.partition("=")
-        n = integrate.merge_tema(vc, src.strip(), dst.strip(), config.WORK / course / "_merged-temas", config.WORK / course)
+        n = integrate.merge_tema(base, src.strip(), dst.strip(), config.WORK / course / "_merged-temas",
+                                 config.WORK / course, roots)
+        if unit_mode:
+            units.rename_tema(config.WORK / course, src.strip(), dst.strip())
         con.print(f"{src} -> {dst}: {n} archivos reescritos")
-    integrate.regen_moc(vc, course, config.course(_settings(), course).full_name)
+    if unit_mode:
+        units.regen_moc_units(vc, course, _full_name(course), units.load_units(_units_json(course)))
+    else:
+        integrate.regen_moc(vc, course, _full_name(course))
 
 
 @app.command("canvas")
 def canvas_cmd(course: str = typer.Option(...)):
-    """Build vault/<course>/MOC-<course>.canvas from the MOC outline."""
+    """Build vault/<course>/MOC-<course>.canvas (course -> units -> sections, or the old MOC outline)."""
+    out = _write_canvas(course)
+    con.print(f"{ch.relpath(out)}: {len(json.loads(out.read_text(encoding='utf-8'))['nodes'])} nodos")
+
+
+def _write_canvas(course: str):
     vc = config.VAULT / course
-    moc = vc / f"MOC-{course}.md"
-    names = {p.stem: p.relative_to(config.VAULT).as_posix() for p in config.VAULT.rglob("*.md")}
-    data = canvas.to_canvas(config.course(_settings(), course).full_name,
-                            canvas.outline(moc.read_text(encoding="utf-8")), names.get)
+    if _units_json(course).exists():
+        us = units.load_units(_units_json(course))
+        h2s = {u.slug: units.unit_h2s(units.doc_path(vc, u)) for u in us}
+        data = canvas.to_canvas_units(_full_name(course), course, us, h2s)
+    else:
+        moc = vc / f"MOC-{course}.md"
+        names = {p.stem: p.relative_to(config.VAULT).as_posix() for p in config.VAULT.rglob("*.md")}
+        data = canvas.to_canvas(_full_name(course), canvas.outline(moc.read_text(encoding="utf-8")), names.get)
     out = vc / f"MOC-{course}.canvas"
     out.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-    con.print(f"{ch.relpath(out)}: {len(data['nodes'])} nodos")
+    return out
 
 
 @app.command("sync")
@@ -242,6 +305,126 @@ def sync_cmd(course: str = typer.Option(...), class_id: str | None = typer.Optio
         con.print(f"{cid}: crudo movido a _clases-dump")
     sync_mod.mirror_vault(config.VAULT / course, s.drive_root / c.drive_folder)
     con.print(f"vault/{course} -> {c.drive_folder}/notas/")
+    for p in sync_mod.copy_root_notes(config.VAULT, s.drive_root):
+        con.print(f"{p.name} -> DRIVE_ROOT/")
+
+
+@app.command("strip-timestamps")
+def strip_timestamps(course: str = typer.Option(...), class_id: str | None = typer.Option(None, "--class")):
+    """Remove [hh:mm:ss] timestamps from the class notes (frontmatter and code blocks untouched)."""
+    clases = config.VAULT / course / "clases"
+    notes = [config.class_dirs(course, class_id)["note"]] if class_id else sorted(clases.glob("*.md"))
+    total = 0
+    for note in notes:
+        if not note.exists():
+            con.print(f"{note.stem}: nota inexistente")
+            continue
+        n = notes_clean.strip_file(note)
+        total += n
+        con.print(f"{note.stem}: {n}") if n else None
+    con.print(f"timestamps removidos: {total} en {len(notes)} notas")
+
+
+@app.command("rename-notes")
+def rename_notes(course: str = typer.Option(...)):
+    """Rename class notes to `<curso>-<class_id>.md` and rewrite the wikilinks to them (idempotent)."""
+    _full_name(course)
+    r = migrate.rename_notes(course)
+    con.print(f"{course}: notas renombradas {r.renamed}; links reescritos {r.links} en {r.files} archivos")
+
+
+@app.command("units-init")
+def units_init(course: str = typer.Option(...), force: bool = False):
+    """Derive work/<c>/units.json from the MOC '## Mapa' outline and move temas/ out of the vault into work/<c>/."""
+    uj = _units_json(course)
+    if uj.exists() and not force:
+        con.print(f"{ch.relpath(uj)} ya existe (usar --force para regenerarlo desde el MOC)")
+        return
+    vc, wc = config.VAULT / course, config.WORK / course
+    moc = vc / f"MOC-{course}.md"
+    us = units.parse_outline(moc.read_text(encoding="utf-8")) if moc.exists() else []
+    if not us:
+        con.print(f"{ch.relpath(moc)}: sin outline '## Mapa' con unidades")
+        raise typer.Exit(1)
+    moved = units.archive_temas(vc, wc)
+    orphans = units.assign_orphans(us, wc)
+    units.save_units(uj, us)
+    con.print(f"{ch.relpath(uj)}: {len(us)} unidades; temas archivados en {ch.relpath(wc / 'temas')}: {moved}")
+    for u in us:
+        con.print(f"  {u.slug}: {len(u.temas)} temas en {len(u.groups)} grupos")
+    for tema, unit_slug in orphans:
+        con.print(f"  huérfano {tema} -> {unit_slug}")
+    con.print(f"huérfanos asignados: {len(orphans)}")
+
+
+@app.command("unit-prompt")
+def unit_prompt(course: str = typer.Option(...), unit: str | None = typer.Option(None, "--unit"),
+                update: str | None = typer.Option(None, "--update", help="TEMA1,TEMA2: modo actualización")):
+    """Write work/<c>/units/<slug>.prompt.md for the redactor-unidad agent (one unit or all)."""
+    uj = _units_json(course)
+    if not uj.exists():
+        raise typer.BadParameter(f"falta {ch.relpath(uj)} (correr units-init)")
+    us = units.load_units(uj)
+    upd = [t.strip() for t in update.split(",") if t.strip()] if update else None
+    sel = [u for u in us if u.slug == unit] if unit else us
+    if unit and not sel:
+        raise typer.BadParameter(f"unidad inexistente: {unit} (hay: {', '.join(u.slug for u in us)})")
+    vc, wc = config.VAULT / course, config.WORK / course
+    full_name = _full_name(course)
+    for u in sel:
+        mine = [t for t in upd if t in u.temas] if upd else None
+        if upd and not mine:
+            if unit:
+                con.print(f"{u.slug}: ninguno de {', '.join(upd)} está en la unidad (asignar con integrate --assign)")
+            continue
+        p = units.build_unit_prompt(course, full_name, u, us, vc, wc, mine)
+        out = wc / "units" / f"{u.slug}.prompt.md"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(p, encoding="utf-8")
+        con.print(f"{ch.relpath(out)}: {len(p)} chars")
+
+
+@app.command("units-finish")
+def units_finish(course: str = typer.Option(...)):
+    """Check unit docs + maps, relink class notes to unit sections, regenerate MOC / canvas / avisos / calendario."""
+    s = _settings()
+    uj = _units_json(course)
+    if not uj.exists():
+        raise typer.BadParameter(f"falta {ch.relpath(uj)} (correr units-init)")
+    us = units.load_units(uj)
+    vc, wc = config.VAULT / course, config.WORK / course
+    errs = [e for u in us for e in units.check_map(units.doc_path(vc, u), units.map_path(wc, u), u)]
+    if errs:
+        for e in errs:
+            con.print(e)
+        con.print(f"{len(errs)} errores: no se tocó nada")
+        raise typer.Exit(1)
+    maps: dict[str, tuple[str, str]] = {}
+    for u in us:
+        for tema, heading in units.load_map(units.map_path(wc, u)).items():
+            maps[tema] = (u.slug, str(heading).strip())
+    titles = {t: units.tema_info(wc, t)["titulo"] for t in maps}
+    plain = 0
+    for note in sorted((vc / "clases").glob("*.md")):
+        new, k = notes_clean.plain_headings(note.read_text(encoding="utf-8"))
+        if k:
+            note.write_text(new, encoding="utf-8")
+            plain += k
+    n = units.relink_classes(vc, maps, titles)
+    full_name = _full_name(course)
+    units.regen_moc_units(vc, course, full_name, us)
+    _write_canvas(course)
+    integrate.regen_avisos(vc, course)
+    integrate.regen_calendario(config.VAULT, list(s.courses))
+    units.regen_root_moc(config.VAULT, {slug: c.full_name for slug, c in s.courses.items()})
+    con.print(f"links de clases re-apuntados a unidades: {n}; MOC, canvas, avisos, calendario y 00-MOC regenerados")
+    files = sorted(vc.rglob("*.md")) + sorted(config.VAULT.glob("*.md"))
+    fixed = units.fix_anchors(config.VAULT, files)
+    con.print(f"encabezados de clase normalizados: {plain}; anclas corregidas: {fixed}")
+    problems = units.check_links(config.VAULT, files)
+    con.print(f"links con problemas: {len(problems)}")
+    for e in problems[:20]:
+        con.print(f"  {e}")
 
 
 @app.command()
@@ -270,7 +453,7 @@ def init_vault():
     """Create the vault skeleton (open vault/ as an Obsidian vault)."""
     s = _settings()
     for slug in s.courses:
-        for sub in ("clases/img", "temas"):
+        for sub in ("clases/img", "unidades"):
             (config.VAULT / slug / sub).mkdir(parents=True, exist_ok=True)
     moc = config.VAULT / "00-MOC-2026.md"
     if not moc.exists():

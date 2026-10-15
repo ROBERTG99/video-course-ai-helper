@@ -19,3 +19,19 @@ def test_to_canvas_tree():
     e = next(e for e in c["edges"] if e["toNode"] == capas["id"])
     assert e["fromNode"] == next(n for n in c["nodes"] if n.get("text") == "Fundamentos")["id"]
     json.dumps(c)
+
+
+def test_to_canvas_units():
+    from pipeline.units import Unit
+
+    us = [Unit(1, "Fundamentos"), Unit(2, "Calidad")]
+    c = canvas.to_canvas_units("Arq", "arqui", us, {"01-fundamentos": ["Qué es", "Rol"], "02-calidad": []})
+    ids = [n["id"] for n in c["nodes"]]
+    assert ids == ["root", "u0", "u0h0", "u0h1", "u3"]
+    u0 = c["nodes"][1]
+    assert u0["file"] == "arqui/unidades/01-fundamentos.md" and u0["x"] == 400 and u0["y"] == 0
+    h = c["nodes"][3]
+    assert h["file"] == "arqui/unidades/01-fundamentos.md" and h["subpath"] == "#Rol" and h["x"] == 800 and h["y"] == 180
+    assert c["nodes"][4]["y"] == 270 and c["nodes"][0]["y"] == 135
+    assert {(e["fromNode"], e["toNode"]) for e in c["edges"]} == {("root", "u0"), ("u0", "u0h0"), ("u0", "u0h1"), ("root", "u3")}
+    json.dumps(c)

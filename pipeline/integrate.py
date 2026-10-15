@@ -5,7 +5,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-from .config import TEMPLATES
+from .config import TEMPLATES, note_name
 
 MARK_START, MARK_END = "<!-- generated:start -->", "<!-- generated:end -->"
 DATE = re.compile(
@@ -39,7 +39,7 @@ def slug_titles(vault_course: Path) -> dict[str, str]:
 
 
 def upsert_tema(vault_course: Path, course: str, cand: dict, class_id: str, index: dict[str, str] | None = None) -> str:
-    """cand: {slug?, titulo, resumen, timestamps:[hh:mm:ss], relacionados:[titulo]} -> created|updated|unchanged.
+    """cand: {slug?, titulo, resumen, relacionados:[titulo]} -> created|updated|unchanged (timestamps are ignored).
 
     `index` (from title_index) maps related titles to real slugs; unknown titles fall back to slugify.
     """
@@ -47,7 +47,8 @@ def upsert_tema(vault_course: Path, course: str, cand: dict, class_id: str, inde
     path = vault_course / "temas" / f"{slug}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
     first = cand["resumen"].strip().splitlines()[0][:160]
-    seen = f"- [[{class_id}]] · {', '.join(cand.get('timestamps') or [])} — {first}"
+    note = note_name(course, class_id)
+    seen = f"- [[{note}]] — {first}"
     if not path.exists():
         tpl = (TEMPLATES / "tema.md").read_text(encoding="utf-8")
         body = tpl.replace("{{tema}}", cand["titulo"]).replace("curso: \n", f"curso: {course}\n", 1)
@@ -58,7 +59,7 @@ def upsert_tema(vault_course: Path, course: str, cand: dict, class_id: str, inde
         path.write_text(body, encoding="utf-8")
         return "created"
     text = path.read_text(encoding="utf-8")
-    if f"[[{class_id}]]" in text:
+    if f"[[{note}]]" in text or f"[[{class_id}]]" in text:  # new or pre-rename link format
         return "unchanged"
     if "## Visto en" not in text:
         text = text.rstrip("\n") + "\n\n## Visto en\n"
@@ -121,9 +122,11 @@ def regen_calendario(vault: Path, courses: list[str]) -> Path:
     return out
 
 
-def merge_tema(vault_course: Path, src: str, dst: str, graveyard: Path, work_course: Path | None = None) -> int:
-    """Fold tema `src` into `dst`: move its ideas and 'Visto en' lines, rewrite [[src]] links across the course
-    vault (and slugs in work/*/temas-candidatos.json), and park the old note in `graveyard`. Returns files rewritten."""
+def merge_tema(vault_course: Path, src: str, dst: str, graveyard: Path, work_course: Path | None = None,
+               link_roots: list[Path] | None = None) -> int:
+    """Fold tema `src` into `dst`: move its ideas and 'Visto en' lines, rewrite [[src]] links across `link_roots`
+    (default: the whole `vault_course`; `vault_course` is the dir holding `temas/`) and slugs in
+    work/*/temas-candidatos.json, and park the old note in `graveyard`. Returns files rewritten."""
     temas = vault_course / "temas"
     sp, dp = temas / f"{src}.md", temas / f"{dst}.md"
     if not sp.exists() or not dp.exists():
@@ -141,7 +144,8 @@ def merge_tema(vault_course: Path, src: str, dst: str, graveyard: Path, work_cou
     sp.replace(graveyard / sp.name)
     link = re.compile(rf"\[\[{re.escape(src)}(?=[\]|#])")
     changed = 0
-    for p in vault_course.rglob("*.md"):
+    files = {p for root in (link_roots or [vault_course]) for p in root.rglob("*.md")}
+    for p in sorted(files):
         text = p.read_text(encoding="utf-8")
         new = link.sub(f"[[{dst}", text)
         if p == dp:  # a tema must not list itself as related
@@ -168,10 +172,16 @@ def closest_slug(name: str, stems: set[str]) -> str | None:
     return pref[0] if len(pref) == 1 else None
 
 
-def relink_dangling(vault_course: Path) -> int:
-    """Point [[links]] in temas/ that match no note to the closest existing tema. Returns links fixed."""
+def relink_dangling(vault_course: Path, known: set[str] | None = None) -> int:
+    """Point [[links]] in temas/ that match no note to the closest existing tema. Returns links fixed.
+
+    `known`: when given, the valid link targets are the temas plus these names (e.g. class notes living in the
+    vault while temas live in work/); otherwise every note under `vault_course`."""
     temas = vault_course / "temas"
-    stems = {p.stem for p in vault_course.rglob("*.md")}
+    if known is None:
+        stems = {p.stem for p in vault_course.rglob("*.md")}
+    else:
+        stems = {p.stem for p in temas.glob("*.md")} | known
     fixed = 0
     for p in temas.glob("*.md"):
         text = p.read_text(encoding="utf-8")

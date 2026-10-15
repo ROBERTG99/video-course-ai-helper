@@ -72,3 +72,14 @@ def test_repoint_video(tmp_path):
     video.write_bytes(b"v")
     assert sync.repoint_video(note, video)
     assert f"video_path: {video}\n" in note.read_text()
+
+
+def test_copy_root_notes(tmp_path):
+    vault, drive = tmp_path / "vault", tmp_path / "Drive"
+    vault.mkdir()
+    drive.mkdir()
+    (vault / "00-MOC-2026.md").write_text("# 2026")
+    assert sync.copy_root_notes(vault, drive) == [drive / "00-MOC-2026.md"]
+    (vault / "calendario.md").write_text("cal")
+    assert len(sync.copy_root_notes(vault, drive)) == 2
+    assert (drive / "00-MOC-2026.md").read_text() == "# 2026" and (drive / "calendario.md").read_text() == "cal"

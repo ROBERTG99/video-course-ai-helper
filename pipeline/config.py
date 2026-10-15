@@ -57,12 +57,17 @@ def course(settings: Settings, slug: str) -> Course:
     return c
 
 
+def note_name(slug: str, class_id: str) -> str:
+    """Vault basename of a class note: `<curso>-<class_id>` (class ids repeat across courses; basenames must not)."""
+    return f"{slug}-{class_id}"
+
+
 def class_dirs(slug: str, class_id: str) -> dict[str, Path]:
     return {
         "raw": RAW / slug / class_id,
         "work": WORK / slug / class_id,
         "state": STATE / slug / f"{class_id}.json",
-        "note": VAULT / slug / "clases" / f"{class_id}.md",
+        "note": VAULT / slug / "clases" / f"{note_name(slug, class_id)}.md",
         "img": VAULT / slug / "clases" / "img" / class_id,
         "vault_course": VAULT / slug,
     }

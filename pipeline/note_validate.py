@@ -9,7 +9,6 @@ REQUIRED_H2 = ["Resumen ejecutivo", "⚠️ Avisos del profesor", "Índice de te
                "Dudas / a verificar", "Citas textuales relevantes", "Material referenciado"]
 IMG = re.compile(r"!\[[^\]]*\]\(([^)]+)\)")
 WIKI = re.compile(r"\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]")
-TS = re.compile(r"\[\d\d:\d\d:\d\d\]")
 
 
 def frontmatter(text: str) -> dict[str, str]:
@@ -47,6 +46,4 @@ def validate(note: Path, vault: Path, extra_names: set[str] | None = None) -> li
     for link in WIKI.findall(text):
         if link.strip() not in names:
             errs.append(f"wikilink roto: [[{link}]]")
-    if not TS.search(text):
-        errs.append("sin timestamps [hh:mm:ss]")
     return errs

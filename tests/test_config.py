@@ -27,5 +27,6 @@ def test_course_without_credentials_raises(repo_root, tmp_path, monkeypatch):
 def test_class_dirs_layout():
     d = config.class_dirs("arqui", "2026-10-07-clase-15")
     assert d["raw"].as_posix().endswith("raw/arqui/2026-10-07-clase-15")
-    assert d["note"].name == "2026-10-07-clase-15.md"
+    assert d["note"].name == "arqui-2026-10-07-clase-15.md"
+    assert config.note_name("isa2", "2026-10-07-clase-15") == "isa2-2026-10-07-clase-15"
     assert d["img"].as_posix().endswith("vault/arqui/clases/img/2026-10-07-clase-15")

@@ -66,7 +66,7 @@ def test_detects_problems(tmp_path):
     assert any("Índice de temas" in e for e in errs)
     assert any("0009.jpg" in e for e in errs)
     assert any("[[nope]]" in e for e in errs)
-    assert any("timestamps" in e for e in errs)
+    assert not any("timestamps" in e for e in errs)
     assert any("'estado'" in e for e in errs)
 
 
@@ -83,3 +83,17 @@ def test_extra_names_count_as_existing(tmp_path):
     note, vault = make(tmp_path, GOOD.replace("[[arquitectura-en-capas]]", "[[tema-nuevo]]"))
     assert any("[[tema-nuevo]]" in e for e in nv.validate(note, vault))
     assert nv.validate(note, vault, extra_names={"tema-nuevo"}) == []
+
+
+def test_no_timestamps_required(tmp_path):
+    note, vault = make(tmp_path, GOOD.replace(" [00:01:00]", ""))
+    assert nv.validate(note, vault) == []
+
+
+def test_anchored_wikilink_resolves_by_note(tmp_path):
+    text = GOOD.replace("[[arquitectura-en-capas]]", "[[01-fundamentos#Capas y responsabilidades|Capas]]")
+    note, vault = make(tmp_path, text)
+    assert any("01-fundamentos" in e for e in nv.validate(note, vault))
+    (vault / "arqui" / "unidades").mkdir()
+    (vault / "arqui" / "unidades" / "01-fundamentos.md").write_text("# U\n## Capas y responsabilidades\n")
+    assert nv.validate(note, vault) == []

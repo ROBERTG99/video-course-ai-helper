@@ -27,6 +27,7 @@ def meta_for(course: config.Course, class_id: str) -> dict:
     video = st.get("stages", {}).get("fetch", {}).get("video")
     return {
         "curso": course.slug, "nombre_curso": course.full_name, "class_id": class_id,
+        "nota": config.note_name(course.slug, class_id),
         "fecha": class_id[:10], "numero": int(class_id[-2:]), "titulo": st.get("title", ""),
         "duracion": round((st.get("duration") or 0) / 60), "vimeo_url": st.get("vimeo_url", ""),
         "video_path": video or "—", "img_rel": f"img/{class_id}",

@@ -33,3 +33,24 @@ def to_canvas(title: str, items: list[tuple[int, str]], resolve: Callable[[str],
         nodes.append(node)
         stack.append(node["id"])
     return {"nodes": nodes, "edges": edges}
+
+
+def to_canvas_units(title: str, course: str, units: list, h2s: dict[str, list[str]]) -> dict:
+    """Course -> units -> unit H2 sections. `units`: objects with .slug; `h2s`: unit slug -> its ## headings."""
+    nodes: list[dict] = []
+    edges: list[dict] = []
+    i = 0
+    for u in units:
+        uid = f"u{i}"
+        doc = f"{course}/unidades/{u.slug}.md"
+        nodes.append({"id": uid, "type": "file", "file": doc, "x": 400, "y": 90 * i, "width": 300, "height": 70})
+        edges.append({"id": f"e-{uid}", "fromNode": "root", "toNode": uid, "fromSide": "right", "toSide": "left"})
+        i += 1
+        for j, h in enumerate(h2s.get(u.slug, [])):
+            hid = f"{uid}h{j}"
+            nodes.append({"id": hid, "type": "file", "file": doc, "subpath": f"#{h}", "x": 800, "y": 90 * i,
+                          "width": 300, "height": 70})
+            edges.append({"id": f"e-{hid}", "fromNode": uid, "toNode": hid, "fromSide": "right", "toSide": "left"})
+            i += 1
+    root = {"id": "root", "type": "text", "text": f"# {title}", "x": 0, "y": 45 * max(i - 1, 0), "width": 320, "height": 80}
+    return {"nodes": [root, *nodes], "edges": edges}

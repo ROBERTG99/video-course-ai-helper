@@ -13,10 +13,10 @@ def test_upsert_tema_create_update_unchanged(tmp_path):
     assert it.upsert_tema(vc, "arqui", CAND, "2026-10-07-clase-15") == "created"
     t = (vc / "temas" / "arquitectura-en-capas.md").read_text(encoding="utf-8")
     assert t.startswith("---\ncurso: arqui\ntema: Arquitectura en capas") and "- [[acoplamiento-y-cohesion]]" in t
-    assert "- [[2026-10-07-clase-15]] · 00:12:30 — Separar presentación" in t
+    assert "- [[arqui-2026-10-07-clase-15]] — Separar presentación" in t and "00:12:30" not in t
     assert it.upsert_tema(vc, "arqui", CAND, "2026-10-14-clase-16") == "updated"
     assert it.upsert_tema(vc, "arqui", CAND, "2026-10-14-clase-16") == "unchanged"
-    assert (vc / "temas" / "arquitectura-en-capas.md").read_text().count("[[2026-10-14-clase-16]]") == 1
+    assert (vc / "temas" / "arquitectura-en-capas.md").read_text().count("[[arqui-2026-10-14-clase-16]]") == 1
 
 
 def test_regen_moc_preserves_manual_part(tmp_path):
@@ -78,7 +78,7 @@ def test_merge_tema_folds_and_rewrites_links(tmp_path):
     assert n >= 2 and not (vc / "temas" / "capas.md").exists() and (tmp_path / "grave" / "capas.md").exists()
     assert note.read_text() == "- [[arquitectura-en-capas]] y [[arquitectura-en-capas|las capas]]\n"
     d = (vc / "temas" / "arquitectura-en-capas.md").read_text(encoding="utf-8")
-    assert "Otra idea." in d and "- [[c2]] · 00:01:00" in d and "- [[arquitectura-en-capas]]\n" not in d
+    assert "Otra idea." in d and "- [[arqui-c2]] — Otra idea." in d and "- [[arquitectura-en-capas]]\n" not in d
     assert '"slug": "arquitectura-en-capas"' in (work / "c2" / "temas-candidatos.json").read_text()
 
 

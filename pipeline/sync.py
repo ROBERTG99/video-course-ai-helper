@@ -55,3 +55,17 @@ def repoint_video(note: Path, video: Path) -> bool:
     if new != text:
         note.write_text(new, encoding="utf-8")
     return new != text
+
+
+ROOT_NOTES = ("00-MOC-2026.md", "calendario.md")
+
+
+def copy_root_notes(vault: Path, drive_root: Path) -> list[Path]:
+    """Copy the vault-level notes (year MOC, calendario) to the Drive root. Returns the copied targets."""
+    out: list[Path] = []
+    for name in ROOT_NOTES:
+        src = vault / name
+        if src.exists():
+            shutil.copy2(src, drive_root / name)
+            out.append(drive_root / name)
+    return out
