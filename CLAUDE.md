@@ -16,6 +16,7 @@
 ## Contexto y estado
 - Estado: `_meta/PROGRESS.md` (leer al iniciar; NO repetir ✅). Decisiones: `_meta/DECISIONES.md`. Plan: `_meta/PLAN.md`. Diseño: `docs/superpowers/specs/2026-10-09-pipeline-clases-design.md`.
 - Para retomar tras /clear: `/retomar`. Después de cada clase nueva: abrir Claude Code en este repo y correr `/nueva-clase <curso>`.
+- Qué falta procesar: `pipeline pending` (exit 3 = hay) · registro `vault/clases-registro.md` (`pipeline registry`) · todos los cursos: `/procesar-nuevas` · desatendido: `scripts/procesar-nuevas.sh` · ver `docs/AUTOMATIZACION.md`.
 - Drive `My Drive/2026/<Curso>/notas/` = destino final (espejo de `vault/<curso>/`). Drive `2026/_clases-dump/` = backup crudo. No se trabaja en Drive.
 
 ## Convenciones

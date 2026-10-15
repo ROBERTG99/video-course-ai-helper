@@ -42,6 +42,9 @@ uv run python -m pipeline strip-timestamps --course arqui             # limpia [
 uv run python -m pipeline units-init --course arqui                   # (migración única) MOC ## Mapa → units.json + archiva temas en work/
 uv run python -m pipeline sync --course arqui [--class ID]
 uv run python -m pipeline status [--course arqui]
+uv run python -m pipeline pending [--course arqui] [--offline] [--json]  # Vimeo vs state/: nueva|incompleta|bloqueada; exit 0 nada, 3 hay, 4 solo errores
+uv run python -m pipeline registry [--offline]                         # escribe vault/clases-registro.md
+uv run python -m pipeline sync-root                                    # copia solo 00-MOC, calendario y registro a DRIVE_ROOT
 ```
 Cada etapa deja `ok|blocked` en `state/<curso>/<class_id>.json`; una etapa `ok` no se repite sin `--force`.
 
@@ -54,6 +57,7 @@ Tandas: 4 clases → 4 analistas en paralelo → `analyze` (marca ok) → `valid
 
 ## Clase nueva de la semana
 `/nueva-clase <curso>` (ver `.claude/commands/nueva-clase.md`). Si `claude -p` no está disponible, `--runner agent` y despachar el analista a mano.
+Qué falta: `pending`. Todos los cursos: `/procesar-nuevas` (`.claude/commands/procesar-nuevas.md`). Desatendido: `scripts/procesar-nuevas.sh` (sin pendientes no gasta tokens). Registro: `vault/clases-registro.md`. Detalle: `docs/AUTOMATIZACION.md`.
 
 ## Desarrollo
 Plan por olas con DoD, código y commit por tarea en `docs/superpowers/plans/2026-10-09-video-course-ai-helper.md`. Ejecutar con `superpowers:subagent-driven-development` (opus implementa) respetando §0.9 (cada agente toca solo sus archivos; ruff + pytest verdes antes de commitear; `git add` explícito).

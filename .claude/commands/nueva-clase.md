@@ -6,5 +6,5 @@ Argumento: `$ARGUMENTS` = slug del curso (arqui|negsoft|dbpt|isa2). Cargá el sk
 5. `avisos-prompt --class <id>` → despachar `verificador-avisos` indicándole que lea `work/$ARGUMENTS/<id>/avisos-prompt.md` → si hay FALTA/CORREGIR/AMBIGUO, despachar `analista-clase` para aplicarlos SOLO en ⚠️ y Dudas, sin timestamps → `validate --class <id> --force`.
 6. `integrate` → lista los temas NUEVOS. Asignar cada uno a la unidad que corresponda: `integrate --assign tema=NN-unidad` (repetible; criterio: el contenido del tema y los grupos de `work/$ARGUMENTS/units.json`).
 7. Por cada unidad afectada: `unit-prompt --unit NN-unidad --update tema1,tema2` → despachar `redactor-unidad` indicándole que lea `work/$ARGUMENTS/units/NN-unidad.prompt.md` (modo actualización).
-8. `units-finish` (verifica mapas, reescribe los links de las clases a las secciones de unidad, regenera MOC, canvas, avisos, calendario e índice raíz; reporta links rotos) → `sync`.
+8. `units-finish` (verifica mapas, reescribe los links de las clases a las secciones de unidad, regenera MOC, canvas, avisos, calendario e índice raíz; reporta links rotos) → `registry` (sin `--course`: reescribe `vault/clases-registro.md`) → `sync`.
 9. Reportar: ruta de la nota, avisos nuevos (copiar la sección ⚠️), unidades actualizadas y cualquier `blocked` con el error exacto. Actualizar `_meta/PROGRESS.md`.
