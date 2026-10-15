@@ -83,3 +83,6 @@ def test_copy_root_notes(tmp_path):
     (vault / "calendario.md").write_text("cal")
     assert len(sync.copy_root_notes(vault, drive)) == 2
     assert (drive / "00-MOC-2026.md").read_text() == "# 2026" and (drive / "calendario.md").read_text() == "cal"
+    (vault / "clases-registro.md").write_text("reg")
+    assert drive / "clases-registro.md" in sync.copy_root_notes(vault, drive)
+    assert (drive / "clases-registro.md").read_text() == "reg"

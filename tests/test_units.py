@@ -201,7 +201,8 @@ def test_regen_root_moc(tmp_path):
     un.save_units(work / "arqui" / "units.json", un.parse_outline(MOC))
     text = un.regen_root_moc(vault, {"arqui": "Arquitectura", "dbpt": "DBPT"}, work).read_text(encoding="utf-8")
     assert text == ("# 2026 — cursos\n\n## Arquitectura\n- [[MOC-arqui]]\n- [[01-fundamentos|Fundamentos]]\n"
-                    "- [[02-calidad-y-tacticas|Calidad y tácticas]]\n\n## DBPT\n- [[MOC-dbpt]]\n\n- [[calendario]]\n")
+                    "- [[02-calidad-y-tacticas|Calidad y tácticas]]\n\n## DBPT\n- [[MOC-dbpt]]\n\n- [[calendario]]\n"
+                    "- [[clases-registro|Registro de clases]]\n")
 
 
 def test_assign_orphans_and_rename(tmp_path):

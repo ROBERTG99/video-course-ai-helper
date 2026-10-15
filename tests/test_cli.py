@@ -13,7 +13,8 @@ def test_help_lists_commands():
     r = runner.invoke(app, ["--help"])
     assert r.exit_code == 0
     for c in ("list-showcase", "fetch", "transcript", "frames", "prompt", "analyze", "validate", "integrate",
-              "canvas", "sync", "status", "init-vault", "strip-timestamps", "units-init", "unit-prompt", "units-finish"):
+              "canvas", "sync", "status", "init-vault", "strip-timestamps", "units-init", "unit-prompt", "units-finish",
+              "pending", "registry", "sync-root"):
         assert c in r.output
     assert "integrate-cmd" not in r.output
 
@@ -181,6 +182,7 @@ def test_unit_prompt_and_finish(tmp_path, monkeypatch):
     assert "Parcial el 15/10" in (vc / "avisos-arqui.md").read_text(encoding="utf-8")
     assert (config.VAULT / "calendario.md").exists()
     assert "- [[02-calidad|Calidad]]" in (config.VAULT / "00-MOC-2026.md").read_text(encoding="utf-8")
+    assert (config.VAULT / "clases-registro.md").exists()  # linked from the root MOC, written offline
     assert "links con problemas:" in r.output
     # unit docs are never overwritten by the pipeline
     assert (vc / "unidades" / "02-calidad.md").read_text(encoding="utf-8").startswith("# Calidad\n> Atributos.")

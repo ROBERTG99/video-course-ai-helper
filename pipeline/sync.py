@@ -57,11 +57,11 @@ def repoint_video(note: Path, video: Path) -> bool:
     return new != text
 
 
-ROOT_NOTES = ("00-MOC-2026.md", "calendario.md")
+ROOT_NOTES = ("00-MOC-2026.md", "calendario.md", "clases-registro.md")
 
 
 def copy_root_notes(vault: Path, drive_root: Path) -> list[Path]:
-    """Copy the vault-level notes (year MOC, calendario) to the Drive root. Returns the copied targets."""
+    """Copy the vault-level notes (year MOC, calendario, clases-registro) to the Drive root. Returns the copied targets."""
     out: list[Path] = []
     for name in ROOT_NOTES:
         src = vault / name

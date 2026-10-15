@@ -330,7 +330,7 @@ def regen_root_moc(vault: Path, courses: dict[str, str], work: Path | None = Non
         if uj.exists():
             out += [f"- [[{u.slug}|{_alias(u.name)}]]" for u in load_units(uj)]
         out.append("")
-    out += ["- [[calendario]]", ""]
+    out += ["- [[calendario]]", "- [[clases-registro|Registro de clases]]", ""]
     p = vault / "00-MOC-2026.md"
     p.write_text("\n".join(out), encoding="utf-8")
     return p

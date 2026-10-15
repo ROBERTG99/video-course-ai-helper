@@ -16,6 +16,7 @@ from . import (
     note_validate,
     notes_clean,
     prompt_builder,
+    registry,
     runner,
     state,
     units,
@@ -309,6 +310,52 @@ def sync_cmd(course: str = typer.Option(...), class_id: str | None = typer.Optio
         con.print(f"{p.name} -> DRIVE_ROOT/")
 
 
+@app.command("sync-root")
+def sync_root():
+    """Copy only the vault-level notes (00-MOC-2026, calendario, clases-registro) to DRIVE_ROOT (no network)."""
+    s = _settings()
+    if str(s.drive_root) in ("", ".") or not s.drive_root.exists():
+        raise typer.BadParameter(f"DRIVE_ROOT no definido o inexistente: {s.drive_root}")
+    for p in sync_mod.copy_root_notes(config.VAULT, s.drive_root):
+        con.print(f"{p.name} -> DRIVE_ROOT/")
+
+
+@app.command("pending")
+def pending_cmd(course: str | None = typer.Option(None), offline: bool = typer.Option(False, "--offline"),
+                as_json: bool = typer.Option(False, "--json")):
+    """Classes to fetch/process: Vimeo showcase vs state/. Exit 0 = nothing pending, 3 = pending, 4 = only errors."""
+    s = _settings()
+    if course:
+        _full_name(course)
+    pend = registry.pending(s, online=not offline, courses=[course] if course else None)
+    if as_json:
+        typer.echo(json.dumps(pend, ensure_ascii=False, indent=1))
+    else:
+        rows = [(slug, r) for slug, rs in pend.items() for r in rs]
+        if not rows:
+            con.print("Nada pendiente: todas las clases publicadas están procesadas.")
+        else:
+            t = Table(title="pendientes")
+            for col in ("curso", "clase", "video", "min", "estado", "título"):
+                t.add_column(col, no_wrap=col != "estado" and col != "título")
+            for slug, r in rows:
+                t.add_row(slug, r["class_id"] or "—", r["video_id"] or "—", str(r["duration_min"]), r["status"],
+                          r["title"] or "—")
+            con.print(t)
+    if registry.has_pending(pend):
+        raise typer.Exit(3)
+    if registry.has_errors(pend):
+        raise typer.Exit(4)
+
+
+@app.command("registry")
+def registry_cmd(offline: bool = typer.Option(False, "--offline")):
+    """Write vault/clases-registro.md (pending + per-course class table). Online unless --offline."""
+    s = _settings()
+    p = registry.write_registry(s, registry.pending(s, online=not offline))
+    con.print(f"{ch.relpath(p)} escrito")
+
+
 @app.command("strip-timestamps")
 def strip_timestamps(course: str = typer.Option(...), class_id: str | None = typer.Option(None, "--class")):
     """Remove [hh:mm:ss] timestamps from the class notes (frontmatter and code blocks untouched)."""
@@ -417,6 +464,8 @@ def units_finish(course: str = typer.Option(...)):
     integrate.regen_avisos(vc, course)
     integrate.regen_calendario(config.VAULT, list(s.courses))
     units.regen_root_moc(config.VAULT, {slug: c.full_name for slug, c in s.courses.items()})
+    if not (config.VAULT / registry.REGISTRY_NAME).exists():  # the root MOC links it; offline: no network here
+        registry.write_registry(s, registry.pending(s, online=False))
     con.print(f"links de clases re-apuntados a unidades: {n}; MOC, canvas, avisos, calendario y 00-MOC regenerados")
     files = sorted(vc.rglob("*.md")) + sorted(config.VAULT.glob("*.md"))
     fixed = units.fix_anchors(config.VAULT, files)
