@@ -37,4 +37,4 @@
 - Total: 50 clases con las 7 etapas `ok` (arqui 17 · negsoft 8 · dbpt 9 · isa2 16).
 
 ## Pendiente
-- Commits del refactor por unidades + rename-notes (esperan "ok" de Robert); push opcional.
+- Commits y push hechos (2026-10-15). Registro de clases + `/procesar-nuevas` + `scripts/procesar-nuevas.sh` ✅ (probado: sin pendientes, 0 tokens). Pendiente: decidir si se programa el script (LaunchAgent diario, ejemplo en `docs/AUTOMATIZACION.md`).
