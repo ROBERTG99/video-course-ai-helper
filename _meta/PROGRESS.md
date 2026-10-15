@@ -27,4 +27,14 @@
 ## Próximo paso
 1. Robert: abrir `vault/` como bóveda en Obsidian y revisar el pilot (`vault/arqui/clases/2026-08-17-clase-01.md`) + 1 nota por curso. Ajustes de plantilla/prompts → DECISIONES.md → re-correr con `--force`.
 2. Próxima clase publicada: `/nueva-clase <curso>` (primera prueba real de la rutina).
-3. Notas raíz (`00-MOC-2026.md`, `calendario.md`) no se espejan a Drive (sync es por curso): decidir si agregarlas.
+
+## Reorganización por unidades ✅ (2026-10-09 → 2026-10-15)
+- Notas de clase sin timestamps; 29 documentos de unidad (opus); MOC = índice; canvas por unidades; `00-MOC-2026.md` y `calendario.md` también en Drive (`2026/`).
+- Nombres de nota únicos `<curso>-<class_id>.md` (`rename-notes`): había 7 class_id repetidos entre cursos → 165 links ambiguos; ahora 0 links rotos en todo el vault. 98 tests verdes.
+
+## Clases nuevas 2026-10-15 ✅
+- arqui 16 (10/12) y 17 (10/14) · negsoft 08 (10/13) · dbpt 09 (10/14) · isa2 16 (10/12): fetch → transcript → frames → nota (opus) → validate → avisos verificados y aplicados → temas asignados a unidades → unidades actualizadas (arqui 01/05/06, negsoft 03, dbpt 06, isa2 02/09) → units-finish → sync.
+- Total: 50 clases con las 7 etapas `ok` (arqui 17 · negsoft 8 · dbpt 9 · isa2 16).
+
+## Pendiente
+- Commits del refactor por unidades + rename-notes (esperan "ok" de Robert); push opcional.

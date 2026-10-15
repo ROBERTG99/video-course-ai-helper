@@ -21,3 +21,12 @@
 - **Pilot sin revisión humana previa a las tandas** (2026-10-09): Robert pidió "arrancar y no frenar hasta terminar"; el checkpoint humano de T12 queda como revisión posterior. Cualquier ajuste se aplica con `--force` por clase.
 - **Verificador opus con ≤3 clases por despacho** (2026-10-09): con 4 clases topó `maxTurns: 10` (los informes se escribieron igual).
 - **Duplicados de temas: el integrador propone, el script fusiona** (`merge-temas a=b`), nunca el agente borra notas.
+
+## 2026-10-09 · Reorganización del vault (pedido de Robert tras revisar las notas)
+- **Vault orientado a unidades, no a temas atómicos**: por curso, un documento completo por unidad del MOC (`vault/<c>/unidades/NN-<slug>.md`, 6–9 por curso) que integra lo visto en todas las clases, con links a la sección exacta de cada nota de clase (`[[<class_id>#<H3>|Clase N]]`). Por qué: ~530 notas de 1 párrafo no sirven para estudiar; Robert pidió documentos completos "como el MOC".
+- **Temas atómicos = insumo interno**: se mueven a `work/<c>/temas/` (no se borran; alimentan al redactor de unidades). El outline del curso pasa a `work/<c>/units.json` (derivado del `## Mapa` de cada MOC); los temas nuevos de cada clase se asignan a una unidad existente.
+- **Notas de clase sin timestamps**: se quitan los `[hh:mm:ss]` de las 45 notas; el analista ya no los escribe y el validador no los exige. Siguen solo en artefactos internos (transcript, temas-candidatos, informes del verificador). El resto de la plantilla de clase NO cambia.
+- **Links de las notas de clase**: `[[tema-slug]]` se reescriben a `[[NN-unidad#Sección|título]]` según el `map.json` que escribe el redactor de cada unidad.
+- **MOC = índice**: unidades (con resumen de 1 línea) + clases + avisos + calendario; canvas = curso → unidades → secciones. `00-MOC-2026.md` y `calendario.md` también se espejan a Drive (`2026/`).
+- **Todos los agentes en opus** (2026-10-09, pedido explícito de Robert): reemplaza el reparto sonnet/haiku del playbook para este proyecto.
+- **Nombre de nota de clase = `<curso>-<class_id>.md`** (2026-10-15): había 7 class_id repetidos entre cursos (misma fecha y número) y Obsidian resuelve links por basename → 165 links ambiguos. El class_id interno (state/work/raw/img/dump) no cambia; solo el nombre de la nota y los links. Links con ruta no sirven porque el espejo en Drive usa otras carpetas.
