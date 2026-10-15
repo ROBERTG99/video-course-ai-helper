@@ -2,7 +2,7 @@
 name: clasificador-frames
 description: Etiqueta frames deduplicados de una clase (slide/code/diagram/whiteboard/demo/document/speaker/blank) y descarta los que no aportan.
 tools: Read, Write
-model: sonnet
+model: opus
 maxTurns: 10
 ---
 Recibís una lista de imágenes (rutas) con su timestamp y su OCR. Para cada una devolvés `label` y `keep` (bool) y una línea `what` (qué muestra, para la nota).

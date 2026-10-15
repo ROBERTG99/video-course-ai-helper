@@ -3,7 +3,7 @@
 ## Idioma y formato
 - Código, commits, identificadores, nombres de scripts: inglés. Notas, resúmenes, docs: español rioplatense.
 - Formato de nota de clase: plantilla FIJA en `templates/clase.md` (secciones y frontmatter no se cambian sin decisión en DECISIONES.md).
-- Imágenes: links markdown relativos `![](img/clase-NN/0042.jpg)`. Notas: wikilinks `[[tema]]`.
+- Imágenes: links markdown relativos `![](img/<class_id>/0042.jpg)`. Links: `[[<curso>-<class_id>#Sección]]` (nombre de nota de clase = `<curso>-<class_id>`, único en el vault) y `[[NN-unidad#Sección]]`. Notas de clase SIN timestamps. Vault al usuario = clases + unidades + MOC + avisos + calendario (temas atómicos solo en `work/`).
 
 ## Comandos
 - Setup: `uv sync` · Lint: `uv run ruff check pipeline/` · Tests: `uv run pytest -q` (SIEMPRE antes de reportar un paso como completo)
@@ -20,6 +20,6 @@
 
 ## Convenciones
 - Cursos (slug → carpeta Drive): arqui→ArqSoft · negsoft→NegSoft · dbpt→DBPT · isa2→ISA2. Transcript SOLO del VTT `es-x-autogen` de Vimeo, obtenido con yt-dlp sobre la `player_embed_url` firmada de la API del showcase (sin login): si una clase no trae track, queda BLOQUEADO y se reporta. Config en `config/courses.yaml`. Links/passwords SOLO en `.env` (gitignored), nunca en chat ni en archivos commiteables.
-- Subagentes: máx 4 simultáneos; sonnet analiza/clasifica/integra; opus SOLO `verificador-avisos`; haiku inventaría. Contexto viaja en el prompt.
+- Subagentes: máx 4 simultáneos; TODOS en opus (pedido de Robert, 2026-10-09). Contexto viaja en el prompt (o en un prompt-file por clase/unidad que solo lee ese agente).
 - Pipeline idempotente: estado por clase en `state/<curso>/<clase>.json`; una etapa ✅ no se re-corre salvo `--force`.
 - Entregables a disco ANTES de reportar; en chat solo rutas + resumen ≤3 líneas.
