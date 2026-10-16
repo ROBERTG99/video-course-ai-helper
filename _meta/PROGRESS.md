@@ -37,4 +37,4 @@
 - Total: 50 clases con las 7 etapas `ok` (arqui 17 · negsoft 8 · dbpt 9 · isa2 16).
 
 ## Pendiente
-- Commits y push hechos (2026-10-15). Registro de clases + `/procesar-nuevas` + `scripts/procesar-nuevas.sh` ✅ (probado: sin pendientes, 0 tokens). Pendiente: decidir si se programa el script (LaunchAgent diario, ejemplo en `docs/AUTOMATIZACION.md`).
+- Commits y push hechos (2026-10-15). Registro de clases + `/procesar-nuevas` + `scripts/procesar-nuevas.sh` ✅ (probado: sin pendientes, 0 tokens). Programado: tarea de la app de Claude `vch-procesar-nuevas` L–V 23:30 (primera vez: "Run now" en la app para aprobar herramientas).

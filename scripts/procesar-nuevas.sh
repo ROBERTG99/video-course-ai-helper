@@ -46,7 +46,8 @@ esac
   --model opus \
   --max-turns "${VCH_MAX_TURNS:-250}" \
   --max-budget-usd "${VCH_BUDGET_USD:-30}" \
-  --allowedTools "Read,Write,Edit,Grep,Glob,Agent,Skill,Bash(uv run:*),Bash(ls:*),Bash(jq:*),Bash(python3:*),Bash(cat:*),Bash(grep:*),Bash(git status:*)" \
+  --allowedTools "Read,Write,Edit,Grep,Glob,Agent,Skill,Bash(uv run python -m pipeline:*),Bash(ls:*),Bash(jq:*),Bash(git status:*)" \
+  --disallowedTools "WebFetch,WebSearch,Bash(curl:*),Bash(wget:*),Bash(python3:*),Bash(git push:*)" \
   --output-format json >>"$LOG" 2>&1
 rc=$?
 log "claude terminó con código $rc"

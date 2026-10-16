@@ -22,26 +22,14 @@ Las clases con las 7 etapas `ok` no aparecen. Exit code: `0` nada pendiente, `3`
 
 ## Costos y techos
 - `VCH_BUDGET_USD` (default `30`) → `--max-budget-usd`; `VCH_MAX_TURNS` (default `250`) → `--max-turns`. Ej.: `VCH_BUDGET_USD=15 scripts/procesar-nuevas.sh`.
-- Herramientas permitidas al headless: Read/Write/Edit/Grep/Glob/Agent/Skill y Bash solo para `uv run`, `ls`, `jq`, `python3`, `cat`, `grep`, `git status` (nada de git add/commit).
+- Herramientas permitidas al headless: Read/Write/Edit/Grep/Glob/Agent/Skill y Bash solo para `uv run python -m pipeline`, `ls`, `jq` y `git status`. Bloqueadas explícitamente: WebFetch/WebSearch, `curl`, `wget`, `python3` y `git push` (los transcripts son contenido externo: se minimiza lo que un texto inyectado podría ejecutar). Nada de git add/commit.
 - Logs: `work/_logs/procesar-AAAA-MM-DD_HHMM.log` (salida JSON de claude incluida, con `total_cost_usd`). Lock en `work/_logs/.lock` evita dos corridas a la vez (si quedó colgado tras un crash: `rmdir work/_logs/.lock`).
 
-## Programarlo (ejemplo, NO instalado)
-`~/Library/LaunchAgents/com.robert.vch.procesar.plist`, todos los días 23:30:
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0"><dict>
-  <key>Label</key><string>com.robert.vch.procesar</string>
-  <key>ProgramArguments</key><array>
-    <string>/bin/bash</string><string>/Users/robert/dev/video-course-ai-helper/scripts/procesar-nuevas.sh</string>
-  </array>
-  <key>EnvironmentVariables</key><dict><key>VCH_BUDGET_USD</key><string>30</string></dict>
-  <key>StartCalendarInterval</key><dict><key>Hour</key><integer>23</integer><key>Minute</key><integer>30</integer></dict>
-  <key>StandardOutPath</key><string>/Users/robert/dev/video-course-ai-helper/work/_logs/launchd.out</string>
-  <key>StandardErrorPath</key><string>/Users/robert/dev/video-course-ai-helper/work/_logs/launchd.err</string>
-</dict></plist>
-```
-Activar: `launchctl load ~/Library/LaunchAgents/com.robert.vch.procesar.plist` (desactivar con `unload`). Claude Code tiene que estar logueado en la Mac.
+## Programación activa: tarea programada de la app de Claude
+- Tarea `vch-procesar-nuevas` (sección "Scheduled" de la app de Claude): **lunes a viernes 23:30** (cron `30 23 * * 1-5`; la app agrega unos minutos de demora). Corre mientras la app está abierta; si estaba cerrada, corre al abrirla.
+- Hace lo mismo que el script: `pending` primero (sin pendientes responde "Sin clases nuevas" y no despacha agentes); con pendientes ejecuta `/procesar-nuevas`.
+- Primera vez: en la app, abrir la tarea y tocar **"Run now"** (o fijarle un modo de permisos) para aprobar las herramientas; las aprobaciones quedan guardadas para las corridas siguientes.
+- Por qué no LaunchAgent/cron: macOS (TCC) no deja que procesos lanzados por launchd escriban en `~/Library/CloudStorage` (Google Drive) sin dar "Acceso total al disco" a `/bin/bash`; la corrida quedaba colgada en `sync-root`. La app de Claude ya tiene ese acceso. `scripts/procesar-nuevas.sh` sigue sirviendo para correr a mano desde una terminal.
 
 ## Si algo queda bloqueado
 `pending` muestra la etapa y el error exacto. Reintento: `uv run python -m pipeline <etapa> --course <c> --class <id> --force` (ej. `fetch` si Vimeo todavía no generó el VTT; volver a probar al día siguiente). Sin VTT `es-x-autogen` no se transcribe localmente: queda bloqueada hasta que Vimeo lo publique.
